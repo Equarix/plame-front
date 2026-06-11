@@ -3,6 +3,7 @@
 import { useAuth } from "@/components/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiPlus, FiUsers, FiBriefcase, FiAlertCircle, FiShield } from "react-icons/fi";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function TRegistroPage() {
   const { logout } = useAuth();
@@ -31,12 +32,16 @@ export function TRegistroPage() {
             </div>
           </div>
 
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-bento-danger hover:bg-bento-danger/5 transition-all cursor-pointer"
-          >
-            Cerrar sesión
-          </button>
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+            
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-bento-danger hover:bg-bento-danger/5 transition-all cursor-pointer"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </header>
 
       {/* ROW 2: Bento Grid Layout */}

@@ -20,6 +20,8 @@ interface AuthContextProps {
     setToken: (token: string) => void;
     login: (data: AuthSchemaType) => void;
     isLoadLogin: boolean;
+    loginAdmin: (data: AuthSchemaType) => void;
+    isLoadLoginAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -32,12 +34,16 @@ export default function AuthProvider({
         "user",
         undefined
     );
-    const [token, setToken] = useState<string>(() => user?.token || "");
+    const [token, setToken] = useState<string>("");
     const router = useRouter();
 
     useEffect(() => {
         if (user) {
             Cookie.set("token", user.token);
+            setToken(user.token);
+        } else {
+            Cookie.remove("token");
+            setToken("");
         }
     }, [user]);
 
@@ -68,11 +74,42 @@ export default function AuthProvider({
         },
     });
 
+    const { mutate: loginAdmin, isPending: isLoadLoginAdmin } = useMutation({
+        mutationFn: async (data: AuthSchemaType) => {
+            const res = await Api.post("/auth/login-admin", data);
+            return res.data as ApiResponse<UserData>;
+        },
+        onSuccess: ({ body: data, token: authToken }) => {
+            const authUser: AuthResponse = {
+                userId: data.userId,
+                name: data.name,
+                lastName: data.lastName,
+                username: data.username,
+                role: data.role,
+                token: authToken!,
+            };
+            setUser(authUser);
+            setToken(authToken!);
+            Cookie.set("token", authToken!);
+            toast.success("Inicio de sesión administrativo exitoso");
+            router.push("/admin");
+        },
+        onError: (e) => {
+            console.log(e);
+            toast.error("Error al iniciar sesión como administrador");
+        },
+    });
+
     const logout = () => {
+        const isAdminRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
         deleteUser();
         setToken("");
         Cookie.remove("token");
-        router.push("/auth/login");
+        if (isAdminRoute) {
+            router.push("/admin/login");
+        } else {
+            router.push("/auth/login");
+        }
     };
 
     return (
@@ -87,6 +124,8 @@ export default function AuthProvider({
                 setToken,
                 login,
                 isLoadLogin,
+                loginAdmin,
+                isLoadLoginAdmin,
             }}
         >
             {children}

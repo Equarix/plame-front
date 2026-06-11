@@ -1,19 +1,29 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { useAuth } from "@/components/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { FiLogOut, FiUsers, FiFileText, FiCheck, FiSettings, FiActivity } from "react-icons/fi";
 import { FaShieldAlt } from "react-icons/fa";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleNavigate = (path: string) => {
     router.push(path);
   };
 
-  const displayName = user ? `${user.name} ${user.lastName}` : "Usuario";
+  const displayName = mounted && user ? `${user.name} ${user.lastName}` : "Usuario";
+  const displayUsername = mounted && user ? user.username : "";
+  const displayRole = mounted && user ? user.role : "USUARIO";
 
   return (
     <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
@@ -41,9 +51,11 @@ export function DashboardPage() {
                 {displayName}
               </p>
               <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-bento-primary dark:bg-zinc-800 text-zinc-900 dark:text-bento-primary rounded-md uppercase tracking-wider">
-                {user?.role || "USUARIO"}
+                {displayRole}
               </span>
             </div>
+            
+            <ThemeToggle />
             
             <button
               onClick={logout}
@@ -102,11 +114,11 @@ export function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Nombre de usuario</p>
-                  <p className="text-sm font-mono text-zinc-600 dark:text-zinc-300">{user?.username}</p>
+                  <p className="text-sm font-mono text-zinc-600 dark:text-zinc-300">{displayUsername}</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Rol del Sistema</p>
-                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{user?.role}</p>
+                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{displayRole}</p>
                 </div>
               </div>
             </div>

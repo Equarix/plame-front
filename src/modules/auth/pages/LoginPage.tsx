@@ -1,11 +1,16 @@
 "use client";
 
 import { LoginForm } from "../components/LoginForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { FaShieldAlt, FaPhoneAlt, FaLock, FaBookOpen } from "react-icons/fa";
 
 export function LoginPage() {
   return (
     <div className="relative min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-5 right-5 z-20">
+        <ThemeToggle />
+      </div>
       {/* Decorative blurred background shapes */}
       <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-[400px] h-[400px] bg-bento-primary/10 rounded-full blur-[80px]" />
       <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[500px] h-[500px] bg-bento-secondary/10 rounded-full blur-[100px]" />

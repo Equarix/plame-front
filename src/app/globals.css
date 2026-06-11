@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #FFF5E6; /* Bento surface */
   --foreground: #111827; /* Bento text */
@@ -39,16 +41,14 @@
   --radius-bento-overlay: var(--radius-bento-overlay);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Keeping bento warm tones but slightly darker for contrast if preferred, 
-       or we can stick to the bento specification of surface=#FFF5E6. 
-       Let's keep the cozy warm light theme as default, and slightly adjust for dark mode: */
-    --background: #12100e;
-    --foreground: #fcf8f2;
-    --bento-surface: #1c1815;
-    --bento-text: #fcf8f2;
-  }
+.dark {
+  /* Keeping bento warm tones but slightly darker for contrast if preferred, 
+     or we can stick to the bento specification of surface=#FFF5E6. 
+     Let's keep the cozy warm light theme as default, and slightly adjust for dark mode: */
+  --background: #12100e;
+  --foreground: #fcf8f2;
+  --bento-surface: #1c1815;
+  --bento-text: #fcf8f2;
 }
 
 body {
