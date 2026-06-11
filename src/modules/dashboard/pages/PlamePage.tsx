@@ -1,54 +1,16 @@
 "use client";
 
-import { useAuth } from "@/components/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiFileText, FiTrendingUp, FiCheckCircle, FiPlusSquare } from "react-icons/fi";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { FiFileText, FiTrendingUp, FiCheckCircle, FiPlusSquare } from "react-icons/fi";
+import { DashboardLayout } from "../components/DashboardLayout";
 
 export function PlamePage() {
-  const { logout } = useAuth();
-  const router = useRouter();
-
   return (
-    <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-6">
-        
-        {/* ROW 1: Navbar (Bento Header Card) */}
-        <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-4 sm:p-5 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push("/")}
-              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-bento-control text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors cursor-pointer border border-zinc-200/30 dark:border-zinc-800"
-            >
-              <FiArrowLeft className="text-lg" />
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-bento-control bg-bento-secondary text-zinc-950 flex items-center justify-center font-bold shadow-inner">
-                <FiFileText className="text-sm" />
-              </div>
-              <span className="font-bold text-bento-text dark:text-zinc-50 text-lg tracking-tight">
-                PLAME
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <ThemeToggle />
-            
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-bento-danger hover:bg-bento-danger/5 transition-all cursor-pointer"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        </header>
-
+    <DashboardLayout title="PLAME" icon={<FiFileText className="text-sm" />}>
       {/* ROW 2: Bento Grid for details */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Bento Card 1: Active Period Banner (Spans 2 columns) */}
-        <div className="md:col-span-2 bg-gradient-to-r from-violet-650 to-indigo-650 dark:from-zinc-900 dark:to-zinc-900 border border-violet-700/20 dark:border-zinc-800 rounded-bento-card p-6 text-white flex flex-col justify-between shadow-md relative overflow-hidden">
+        <div className="md:col-span-2 bg-gradient-to-r from-violet-650 to-indigo-650 dark:from-zinc-900 dark:to-zinc-900 border border-violet-700/20 dark:border-zinc-800/50 rounded-bento-card p-6 text-white flex flex-col justify-between shadow-md relative overflow-hidden">
           {/* Subtle design element */}
           <div className="absolute right-0 bottom-0 translate-x-1/10 translate-y-1/10 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
 
@@ -67,9 +29,9 @@ export function PlamePage() {
         </div>
 
         {/* Bento Card 2: Quick Action (New Declaration) */}
-        <div className="bg-bento-secondary dark:bg-zinc-900 border border-zinc-900/5 dark:border-zinc-800 rounded-bento-card p-6 shadow-sm flex flex-col justify-between h-full min-h-[180px] text-zinc-950 dark:text-zinc-50 group hover:opacity-95 transition-opacity cursor-pointer">
+        <div className="bg-bento-secondary dark:bg-zinc-900 border border-zinc-900/5 dark:border-zinc-800/50 rounded-bento-card p-6 shadow-sm flex flex-col justify-between h-full min-h-[180px] text-zinc-950 dark:text-zinc-50 group hover:opacity-95 transition-opacity cursor-pointer">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-900/60 dark:text-zinc-400">Declaraciones</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-900/60 dark:text-zinc-450">Declaraciones</span>
             <div className="w-8 h-8 rounded-bento-control bg-zinc-950 text-white flex items-center justify-center">
               <FiPlusSquare className="text-base" />
             </div>
@@ -136,7 +98,6 @@ export function PlamePage() {
           </table>
         </div>
       </div>
-    </div>
-  </div>
+    </DashboardLayout>
   );
 }

@@ -4,18 +4,44 @@ import { useState, useEffect } from "react";
 
 import { useAuth } from "@/components/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { FiLogOut, FiUsers, FiFileText, FiCheck, FiSettings, FiActivity } from "react-icons/fi";
+import { FiLogOut, FiUsers, FiFileText, FiCheck, FiSettings, FiActivity, FiLock } from "react-icons/fi";
 import { FaShieldAlt } from "react-icons/fa";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useQuery } from "@tanstack/react-query";
+import { Api } from "@/lib/api";
+import type { ApiResponse, EmpresaData } from "@/interface/response.interface";
+import { CompanySelectionModal } from "../components/CompanySelectionModal";
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, token, companyId, setCompanyId } = useAuth();
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch public companies
+  const {
+    data: publicCompaniesResponse,
+    isLoading: isLoadingCompanies,
+  } = useQuery<ApiResponse<EmpresaData[]>>({
+    queryKey: ["public-companies", token],
+    queryFn: async () => {
+      const res = await Api.get("/t-empresa/public", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    },
+    enabled: !!token,
+  });
+
+  const companiesList = publicCompaniesResponse?.body || [];
+  const activeCompany = companiesList.find((c) => c.companyId === companyId);
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -30,7 +56,7 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-6">
         
         {/* ROW 1: Header / Top Navbar (Bento Card Layout) */}
-        <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-4 sm:p-5 flex items-center justify-between shadow-sm">
+        <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-4 sm:p-5 flex items-center justify-between shadow-sm gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-bento-control bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 shadow-md">
               <FaShieldAlt className="text-xl" />
@@ -44,6 +70,40 @@ export function DashboardPage() {
               </span>
             </div>
           </div>
+
+          {/* Active Company Header Widget (Desktop) */}
+          {mounted && (
+            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-zinc-50/50 dark:bg-zinc-800/20 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-control">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+              <div className="text-left min-w-[120px] max-w-[200px]">
+                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider leading-none">
+                  Empresa Activa
+                </p>
+                {companyId ? (
+                  <>
+                    <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100 truncate mt-1 leading-tight">
+                      {activeCompany?.name || "Cargando..."}
+                    </p>
+                    <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 mt-0.5 leading-none">
+                      RUC: {activeCompany?.ruc || "..."}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs font-bold text-bento-danger mt-1 leading-tight">
+                    Sin seleccionar
+                  </p>
+                )}
+              </div>
+              {companyId && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="ml-2 px-2.5 py-1 text-[10px] font-bold bg-white dark:bg-zinc-800 hover:bg-bento-secondary hover:text-zinc-950 border border-zinc-200 dark:border-zinc-700 hover:border-transparent rounded-bento-control transition-all duration-200 cursor-pointer shadow-sm"
+                >
+                  Cambiar
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
@@ -72,13 +132,25 @@ export function DashboardPage() {
           
           {/* Bento Card 1: T-Registro (Large Card spanning 2 columns) */}
           <div
-            onClick={() => handleNavigate("/t-registro")}
-            className="md:col-span-2 group relative bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 hover:border-bento-primary dark:hover:border-bento-primary rounded-bento-card p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden"
+            onClick={() => {
+              if (companyId) {
+                handleNavigate("/t-registro");
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+            className={`md:col-span-2 group relative bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden ${
+              !companyId
+                ? "border-zinc-300 dark:border-zinc-850 hover:border-zinc-350 dark:hover:border-zinc-800"
+                : "hover:border-bento-primary dark:hover:border-bento-primary"
+            }`}
           >
             {/* Top-right decorative background patch */}
-            <div className="absolute top-0 right-0 w-28 h-28 bg-bento-primary/10 rounded-bl-full group-hover:bg-bento-primary/20 transition-colors" />
+            <div className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
+              !companyId ? "bg-zinc-100/50 dark:bg-zinc-850/50" : "bg-bento-primary/10 group-hover:bg-bento-primary/20"
+            }`} />
 
-            <div>
+            <div className={!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}>
               <div className="w-12 h-12 rounded-bento-control bg-bento-primary text-zinc-900 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300">
                 <FiUsers className="text-xl" />
               </div>
@@ -90,7 +162,7 @@ export function DashboardPage() {
               </p>
             </div>
 
-            <div className="mt-8 flex items-center justify-between">
+            <div className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}>
               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                 Sincronización activa
@@ -99,6 +171,18 @@ export function DashboardPage() {
                 Ingresar al Registro &rarr;
               </span>
             </div>
+
+            {/* Lock Overlay Content */}
+            {!companyId && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50/10 dark:bg-zinc-900/10 backdrop-blur-[0.5px]">
+                <div className="w-10 h-10 rounded-full bg-zinc-150 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shadow-sm mb-2">
+                  <FiLock className="text-base" />
+                </div>
+                <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                  Requiere Selección de Empresa
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Bento Card 2: User Profile Metadata (1 column) */}
@@ -120,6 +204,39 @@ export function DashboardPage() {
                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Rol del Sistema</p>
                   <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{displayRole}</p>
                 </div>
+                {mounted && (
+                  <div className="pt-3 border-t border-zinc-200/30 dark:border-zinc-800/30">
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Empresa Seleccionada</p>
+                    {companyId ? (
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-bento-text dark:text-zinc-100 truncate">
+                            {activeCompany?.name || "Cargando..."}
+                          </p>
+                          <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 mt-0.5 leading-none">
+                            RUC: {activeCompany?.ruc || "..."}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setIsModalOpen(true)}
+                          className="shrink-0 px-2 py-1 text-[9px] font-bold bg-white dark:bg-zinc-800 hover:bg-bento-secondary hover:text-zinc-950 rounded border border-zinc-200 dark:border-zinc-700 hover:border-transparent transition-all cursor-pointer shadow-sm"
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-bento-danger">Sin seleccionar</p>
+                        <button
+                          onClick={() => setIsModalOpen(true)}
+                          className="shrink-0 px-2 py-1 text-[9px] font-bold bg-bento-danger text-white rounded hover:bg-bento-danger/90 transition-all cursor-pointer animate-pulse"
+                        >
+                          Seleccionar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -157,13 +274,25 @@ export function DashboardPage() {
 
           {/* Bento Card 4: PLAME (Large Card spanning 2 columns) */}
           <div
-            onClick={() => handleNavigate("/plame")}
-            className="md:col-span-2 group relative bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 hover:border-bento-secondary dark:hover:border-bento-secondary rounded-bento-card p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden"
+            onClick={() => {
+              if (companyId) {
+                handleNavigate("/plame");
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+            className={`md:col-span-2 group relative bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden ${
+              !companyId
+                ? "border-zinc-300 dark:border-zinc-850 hover:border-zinc-350 dark:hover:border-zinc-800"
+                : "hover:border-bento-secondary dark:hover:border-bento-secondary"
+            }`}
           >
             {/* Top-right decorative background patch */}
-            <div className="absolute top-0 right-0 w-28 h-28 bg-bento-secondary/10 rounded-bl-full group-hover:bg-bento-secondary/20 transition-colors" />
+            <div className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
+              !companyId ? "bg-zinc-100/50 dark:bg-zinc-850/50" : "bg-bento-secondary/10 group-hover:bg-bento-secondary/20"
+            }`} />
 
-            <div>
+            <div className={!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}>
               <div className="w-12 h-12 rounded-bento-control bg-bento-secondary text-zinc-950 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300">
                 <FiFileText className="text-xl" />
               </div>
@@ -175,7 +304,7 @@ export function DashboardPage() {
               </p>
             </div>
 
-            <div className="mt-8 flex items-center justify-between">
+            <div className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}>
               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                 Declaración de Junio 2026 activa
@@ -184,11 +313,35 @@ export function DashboardPage() {
                 Ingresar a PLAME &rarr;
               </span>
             </div>
+
+            {/* Lock Overlay Content */}
+            {!companyId && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50/10 dark:bg-zinc-900/10 backdrop-blur-[0.5px]">
+                <div className="w-10 h-10 rounded-full bg-zinc-150 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shadow-sm mb-2">
+                  <FiLock className="text-base" />
+                </div>
+                <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                  Requiere Selección de Empresa
+                </p>
+              </div>
+            )}
           </div>
 
         </div>
 
       </div>
+
+      <CompanySelectionModal
+        isOpen={mounted && (!companyId || isModalOpen)}
+        onClose={() => setIsModalOpen(false)}
+        companies={companiesList}
+        isLoading={isLoadingCompanies}
+        selectedCompanyId={companyId}
+        onSelect={(id) => {
+          setCompanyId(id);
+          setIsModalOpen(false);
+        }}
+      />
     </div>
   );
 }

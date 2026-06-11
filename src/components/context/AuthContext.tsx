@@ -13,8 +13,6 @@ import { useRouter } from "next/navigation";
 interface AuthContextProps {
     user?: AuthResponse;
     token: string;
-    // register: (data: RegisterSchemaType) => void;
-    // isLoadRegister: boolean;
     logout: () => void;
     setUser: (user: AuthResponse) => void;
     setToken: (token: string) => void;
@@ -22,6 +20,8 @@ interface AuthContextProps {
     isLoadLogin: boolean;
     loginAdmin: (data: AuthSchemaType) => void;
     isLoadLoginAdmin: boolean;
+    companyId?: number;
+    setCompanyId: (companyId: number | undefined) => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -32,6 +32,10 @@ export default function AuthProvider({
 }) {
     const [user, setUser, deleteUser] = useLocalStorage<AuthResponse | undefined>(
         "user",
+        undefined
+    );
+    const [companyId, setCompanyId, deleteCompanyId] = useLocalStorage<number | undefined>(
+        "companyId",
         undefined
     );
     const [token, setToken] = useState<string>("");
@@ -104,6 +108,7 @@ export default function AuthProvider({
         const isAdminRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
         deleteUser();
         setToken("");
+        deleteCompanyId();
         Cookie.remove("token");
         if (isAdminRoute) {
             router.push("/admin/login");
@@ -117,8 +122,6 @@ export default function AuthProvider({
             value={{
                 user,
                 token,
-                // register,
-                // isLoadRegister,
                 logout,
                 setUser,
                 setToken,
@@ -126,6 +129,8 @@ export default function AuthProvider({
                 isLoadLogin,
                 loginAdmin,
                 isLoadLoginAdmin,
+                companyId,
+                setCompanyId,
             }}
         >
             {children}

@@ -62,3 +62,19 @@ export interface SituacionAcademicaData {
   estado: boolean;
   createdAt?: string;
 }
+
+export interface PersonaData {
+  personaId: number;
+  dni: string;
+  fechaNacimiento: string;
+  sexo: string;
+  estadoCivil: string;
+  nacionalidad: string;
+  primeraDireccion: string;
+  segundaDireccion: string;
+  telefono: string;
+  email: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
