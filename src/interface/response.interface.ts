@@ -42,15 +42,23 @@ export interface EmpresaData {
 }
 
 export interface EntidadBancariaData {
-  id: number;
+  entidadId: number;
   name: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface OcupacionData {
-  id: number;
+  ocupacionId: number;
   name: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface SituacionAcademicaData {
+  situacionEducativaId: number;
+  nombre: string;
+  requiereEstudios: boolean;
+  estado: boolean;
+  createdAt?: string;
 }

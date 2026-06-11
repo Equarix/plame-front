@@ -72,8 +72,8 @@ export function AdminOcupacionesPage() {
 
   // 3. Edit Occupation Mutation
   const { mutate: editOcupacion, isPending: isEditing } = useMutation({
-    mutationFn: async ({ id, formData }: { id: number; formData: OcupacionFormType }) => {
-      const res = await Api.patch(`/ocupacion/${id}`, formData, {
+    mutationFn: async ({ ocupacionId, formData }: { ocupacionId: number; formData: OcupacionFormType }) => {
+      const res = await Api.patch(`/ocupacion/${ocupacionId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -92,8 +92,8 @@ export function AdminOcupacionesPage() {
 
   // 4. Delete Occupation Mutation
   const { mutate: deleteOcupacion, isPending: isDeleting } = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await Api.delete(`/ocupacion/${id}`, {
+    mutationFn: async (ocupacionId: number) => {
+      const res = await Api.delete(`/ocupacion/${ocupacionId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -121,15 +121,15 @@ export function AdminOcupacionesPage() {
 
   const handleModalSubmit = (formData: OcupacionFormType) => {
     if (selectedOcupacion) {
-      editOcupacion({ id: selectedOcupacion.id, formData });
+      editOcupacion({ ocupacionId: selectedOcupacion.ocupacionId, formData });
     } else {
       createOcupacion(formData);
     }
   };
 
-  const handleDeleteOcupacion = (id: number) => {
+  const handleDeleteOcupacion = (ocupacionId: number) => {
     if (window.confirm("¿Está seguro de eliminar esta ocupación?")) {
-      deleteOcupacion(id);
+      deleteOcupacion(ocupacionId);
     }
   };
 
@@ -192,11 +192,11 @@ export function AdminOcupacionesPage() {
               <tbody className="divide-y divide-zinc-200/30 dark:divide-zinc-800/50 text-sm">
                 {filteredOcupaciones.map((ocu) => (
                   <tr
-                    key={ocu.id}
+                    key={ocu.ocupacionId}
                     className="hover:bg-zinc-100/30 dark:hover:bg-zinc-900/20 transition-colors"
                   >
                     <td className="px-6 py-4 font-mono font-bold text-zinc-400 dark:text-zinc-500">
-                      #{ocu.id}
+                      #{ocu.ocupacionId}
                     </td>
                     <td className="px-6 py-4 font-semibold text-zinc-900 dark:text-zinc-200">
                       {ocu.name}
@@ -211,7 +211,7 @@ export function AdminOcupacionesPage() {
                           <FiEdit className="text-sm" />
                         </button>
                         <button
-                          onClick={() => handleDeleteOcupacion(ocu.id)}
+                          onClick={() => handleDeleteOcupacion(ocu.ocupacionId)}
                           title="Eliminar"
                           className="p-1.5 border border-zinc-200 dark:border-zinc-800 rounded-bento-control hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 text-zinc-500 hover:text-red-600 transition-colors cursor-pointer"
                         >
