@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFF5E6; /* Bento surface */
+  --foreground: #111827; /* Bento text */
+
+  --bento-primary: #FAD4C0;
+  --bento-secondary: #80A1C1;
+  --bento-success: #16A34A;
+  --bento-warning: #D97706;
+  --bento-danger: #DC2626;
+  --bento-surface: #FFF5E6;
+  --bento-text: #111827;
+
+  /* Bento rounded corners */
+  --radius-bento-control: 6px;
+  --radius-bento-card: 8px;
+  --radius-bento-overlay: 12px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), Inter, sans-serif;
+  --font-mono: var(--font-geist-mono), JetBrains Mono, monospace;
+
+  /* Bento Custom Colors */
+  --color-bento-primary: var(--bento-primary);
+  --color-bento-secondary: var(--bento-secondary);
+  --color-bento-success: var(--bento-success);
+  --color-bento-warning: var(--bento-warning);
+  --color-bento-danger: var(--bento-danger);
+  --color-bento-surface: var(--bento-surface);
+  --color-bento-text: var(--bento-text);
+
+  /* Bento Custom Radii */
+  --radius-bento-control: var(--radius-bento-control);
+  --radius-bento-card: var(--radius-bento-card);
+  --radius-bento-overlay: var(--radius-bento-overlay);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Keeping bento warm tones but slightly darker for contrast if preferred, 
+       or we can stick to the bento specification of surface=#FFF5E6. 
+       Let's keep the cozy warm light theme as default, and slightly adjust for dark mode: */
+    --background: #12100e;
+    --foreground: #fcf8f2;
+    --bento-surface: #1c1815;
+    --bento-text: #fcf8f2;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  max-width: 100%;
 }
