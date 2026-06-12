@@ -26,7 +26,10 @@ import { PersonaSummaryCard } from "../../persona/components/PersonaSummaryCard"
 import { formatDireccion } from "@/utils/address";
 import { useTRegistroForm, CategoriaType } from "../hooks/useTRegistroForm";
 import { Tabs, TabHeader, TabHeaderButton, TabBody, Tab } from "@/components/Tabs/Tabs";
-import { FormCardRadioGroup } from "@/components/forms/FormCardRadioGroup";
+import { ResumenTab } from "../components/ResumenTab";
+import { TrabajadorTab } from "../components/TrabajadorTab";
+import { PensionistaTab } from "../components/PensionistaTab";
+import { FormacionTab } from "../components/FormacionTab";
 
 const getDireccionSummary = (dir: DireccionFormType): string => {
   const parts = [
@@ -217,26 +220,48 @@ export function TRegistroCrearPage() {
           <Tabs defaultValue="resumen" className="mt-4" onChange={(val) => setActiveTab(val as any)}>
             <TabHeader>
               <TabHeaderButton value="resumen">Resumen de Prestadores</TabHeaderButton>
-              <TabHeaderButton value="trabajador" className="opacity-50 cursor-not-allowed" disabled={true}>
+              <TabHeaderButton
+                value="trabajador"
+                disabled={categoria !== "TRABAJADOR"}
+                className={categoria !== "TRABAJADOR" ? "opacity-50 cursor-not-allowed" : ""}
+              >
                 Trabajador
               </TabHeaderButton>
-              <TabHeaderButton value="pensionista" className="opacity-50 cursor-not-allowed" disabled={true}>
+              <TabHeaderButton
+                value="pensionista"
+                disabled={categoria !== "PENSIONISTA"}
+                className={categoria !== "PENSIONISTA" ? "opacity-50 cursor-not-allowed" : ""}
+              >
                 Pensionista
               </TabHeaderButton>
-              <TabHeaderButton value="formacion" className="opacity-50 cursor-not-allowed" disabled={true}>
+              <TabHeaderButton
+                value="formacion"
+                disabled={categoria !== "PERSONAL_FORMACION_LABORAL"}
+                className={categoria !== "PERSONAL_FORMACION_LABORAL" ? "opacity-50 cursor-not-allowed" : ""}
+              >
                 Personal en formación laboral
               </TabHeaderButton>
             </TabHeader>
 
             <TabBody className="py-4 min-h-[220px]">
               <Tab value="resumen">
-                <FormCardRadioGroup
-                  label="Seleccione el tipo de prestador que desea registrar para esta persona:"
-                  name="categoriaPrestador"
-                  value={categoria}
-                  onChange={(val) => setCategoria(val as CategoriaType)}
-                  options={categoriesList}
+                <ResumenTab
+                  categoria={categoria}
+                  setCategoria={setCategoria}
+                  categoriesList={categoriesList}
                 />
+              </Tab>
+
+              <Tab value="trabajador">
+                <TrabajadorTab />
+              </Tab>
+
+              <Tab value="pensionista">
+                <PensionistaTab />
+              </Tab>
+
+              <Tab value="formacion">
+                <FormacionTab />
               </Tab>
             </TabBody>
           </Tabs>
