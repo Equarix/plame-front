@@ -115,11 +115,9 @@ export interface PersonaData {
   sexo: string;
   estadoCivil: string;
   nacionalidad: string;
-  primeraDireccion?: DireccionData[];
-  segundaDireccion?: DireccionData;
+  direcciones: DireccionData[];
   telefono?: string;
   email?: string;
   createdAt?: string;
   updatedAt?: string;
 }
-

@@ -7,7 +7,7 @@ interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElem
   options: { value: string | number; label: string }[];
   disabled?: boolean;
   error?: string;
-  register: UseFormRegisterReturn;
+  register?: UseFormRegisterReturn;
 }
 
 export function FormSelect({
@@ -29,7 +29,7 @@ export function FormSelect({
       </label>
 
       <select
-        {...register}
+        {...(register || {})}
         {...rest}
         id={name}
         disabled={disabled}

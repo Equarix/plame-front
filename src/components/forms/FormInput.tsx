@@ -10,7 +10,7 @@ interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
   disabled?: boolean;
   error?: string;
   icon?: IconType;
-  register: UseFormRegisterReturn;
+  register?: UseFormRegisterReturn;
   rightElement?: React.ReactNode;
 }
 
@@ -47,7 +47,7 @@ export function FormInput({
 
         {/* Input Control */}
         <input
-          {...register}
+          {...(register || {})}
           {...rest}
           type={type}
           id={name}

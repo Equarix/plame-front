@@ -5,6 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { personaSchema, type PersonaFormType, type DireccionFormType } from "../schemas/persona.schema";
 import { FormInput } from "@/components/forms/FormInput";
+import { FormSelect } from "@/components/forms/FormSelect";
 import type { PersonaData } from "@/interface/response.interface";
 import { FiX, FiPlusCircle, FiEdit2, FiMapPin } from "react-icons/fi";
 import { DireccionModal } from "../../persona/components/DireccionModal";
@@ -100,8 +101,8 @@ export function AdminPersonaModal({
           }
         }
 
-        const dir = personaToEdit.primeraDireccion && personaToEdit.primeraDireccion.length > 0
-          ? personaToEdit.primeraDireccion[0]
+        const dir = personaToEdit.direcciones && personaToEdit.direcciones.length > 0
+          ? personaToEdit.direcciones[0]
           : null;
 
         reset({
@@ -264,65 +265,31 @@ export function AdminPersonaModal({
                 error={errors.fechaNacimiento?.message}
               />
 
-              <div className="flex flex-col w-full">
-                <label
-                  htmlFor="sexo"
-                  className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                >
-                  Sexo
-                </label>
-                <select
-                  id="sexo"
-                  disabled={isLoading}
-                  {...register("sexo")}
-                  className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                    errors.sexo
-                      ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                      : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary dark:focus:border-bento-secondary/50"
-                  }`}
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="MASCULINO">MASCULINO</option>
-                  <option value="FEMENINO">FEMENINO</option>
-                </select>
-                {errors.sexo && (
-                  <p className="mt-1.5 text-xs text-bento-danger dark:text-bento-danger/90 flex items-center gap-1.5 font-medium animate-fadeIn">
-                    <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
-                    {errors.sexo.message}
-                  </p>
-                )}
-              </div>
+              <FormSelect
+                label="Sexo"
+                name="sexo"
+                disabled={isLoading}
+                register={register("sexo")}
+                error={errors.sexo?.message}
+                options={[
+                  { value: "MASCULINO", label: "MASCULINO" },
+                  { value: "FEMENINO", label: "FEMENINO" },
+                ]}
+              />
 
-              <div className="flex flex-col w-full">
-                <label
-                  htmlFor="estadoCivil"
-                  className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                >
-                  Estado Civil
-                </label>
-                <select
-                  id="estadoCivil"
-                  disabled={isLoading}
-                  {...register("estadoCivil")}
-                  className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                    errors.estadoCivil
-                      ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                      : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary dark:focus:border-bento-secondary/50"
-                  }`}
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="SOLTERO">SOLTERO(A)</option>
-                  <option value="CASADO">CASADO(A)</option>
-                  <option value="DIVORCIADO">DIVORCIADO(A)</option>
-                  <option value="VIUDO">VIUDO(A)</option>
-                </select>
-                {errors.estadoCivil && (
-                  <p className="mt-1.5 text-xs text-bento-danger dark:text-bento-danger/90 flex items-center gap-1.5 font-medium animate-fadeIn">
-                    <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
-                    {errors.estadoCivil.message}
-                  </p>
-                )}
-              </div>
+              <FormSelect
+                label="Estado Civil"
+                name="estadoCivil"
+                disabled={isLoading}
+                register={register("estadoCivil")}
+                error={errors.estadoCivil?.message}
+                options={[
+                  { value: "SOLTERO", label: "SOLTERO(A)" },
+                  { value: "CASADO", label: "CASADO(A)" },
+                  { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
+                  { value: "VIUDO", label: "VIUDO(A)" },
+                ]}
+              />
 
               <FormInput
                 label="Nacionalidad"

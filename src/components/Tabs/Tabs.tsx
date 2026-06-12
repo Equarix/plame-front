@@ -58,13 +58,13 @@ export function TabHeader({ children, className = "" }: TabHeaderProps) {
   );
 }
 
-interface TabHeaderButtonProps {
+interface TabHeaderButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
   children: React.ReactNode;
   className?: string;
 }
 
-export function TabHeaderButton({ value, children, className = "" }: TabHeaderButtonProps) {
+export function TabHeaderButton({ value, children, className = "", ...rest }: TabHeaderButtonProps) {
   const { activeTab, setActiveTab } = useTabsContext();
   const isActive = activeTab === value;
 
@@ -77,6 +77,7 @@ export function TabHeaderButton({ value, children, className = "" }: TabHeaderBu
           ? "bg-white dark:bg-zinc-850 text-zinc-950 dark:text-zinc-50 shadow-sm border border-zinc-250/50 dark:border-zinc-800/50"
           : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 bg-transparent border border-transparent"
       } ${className}`}
+      {...rest}
     >
       {children}
     </button>

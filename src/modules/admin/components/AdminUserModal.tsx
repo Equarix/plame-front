@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, type UserFormType } from "../schemas/user.schema";
 import { FormInput } from "@/components/forms/FormInput";
+import { FormSelect } from "@/components/forms/FormSelect";
 import type { UserData } from "@/interface/response.interface";
 import { FiX, FiUserPlus, FiEdit2 } from "react-icons/fi";
 
@@ -123,27 +124,17 @@ export function AdminUserModal({
             error={errors.username?.message}
           />
 
-          {/* Role select dropdown */}
-          <div className="flex flex-col">
-            <label
-              htmlFor="role"
-              className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-            >
-              Rol del Usuario
-            </label>
-            <select
-              {...register("role")}
-              id="role"
-              disabled={isLoading}
-              className="block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-bento-secondary/20 focus:border-bento-secondary dark:focus:border-bento-secondary/50 h-11 px-3.5"
-            >
-              <option value="USER">USER (Contribuyente estándar)</option>
-              <option value="ADMIN">ADMIN (Administrador)</option>
-            </select>
-            {errors.role && (
-              <p className="mt-1.5 text-xs text-bento-danger font-medium">{errors.role.message}</p>
-            )}
-          </div>
+          <FormSelect
+            label="Rol del Usuario"
+            name="role"
+            disabled={isLoading}
+            register={register("role")}
+            error={errors.role?.message}
+            options={[
+              { value: "USER", label: "USER (Contribuyente estándar)" },
+              { value: "ADMIN", label: "ADMIN (Administrador)" },
+            ]}
+          />
 
           <FormInput
             label={isEditing ? "Contraseña (Opcional - dejar vacío para no cambiar)" : "Contraseña"}

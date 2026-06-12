@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
-import { useMutation } from "@tanstack/react-query";
-import { Api } from "@/lib/api";
-import { toast } from "sonner";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import {
   FiPlus,
   FiSearch,
@@ -16,15 +12,21 @@ import {
   FiPhone,
   FiMail,
   FiLock,
+  FiCheck,
 } from "react-icons/fi";
+import { toast } from "sonner";
 
-import type { ApiResponse, PersonaData, DireccionData } from "@/interface/response.interface";
-import { personaSchema, type PersonaFormType, type DireccionFormType } from "../../admin/schemas/persona.schema";
+import { type DireccionFormType } from "../../admin/schemas/persona.schema";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { FormInput } from "@/components/forms/FormInput";
+import { FormSelect } from "@/components/forms/FormSelect";
 import { DireccionModal } from "../../persona/components/DireccionModal";
+import { AddAddressModal } from "../../persona/components/AddAddressModal";
+import { PersonaSummaryCard } from "../../persona/components/PersonaSummaryCard";
 import { formatDireccion } from "@/utils/address";
-import { AxiosError } from "axios";
+import { useTRegistroForm, CategoriaType } from "../hooks/useTRegistroForm";
+import { Tabs, TabHeader, TabHeaderButton, TabBody, Tab } from "@/components/Tabs/Tabs";
+import { FormCardRadioGroup } from "@/components/forms/FormCardRadioGroup";
 
 const getDireccionSummary = (dir: DireccionFormType): string => {
   const parts = [
@@ -36,55 +38,44 @@ const getDireccionSummary = (dir: DireccionFormType): string => {
 };
 
 export function TRegistroCrearPage() {
-  const { token } = useAuth();
+  const router = useRouter();
 
-  const [selectedPersona, setSelectedPersona] = useState<PersonaData | undefined>(undefined);
-  const [isModalOpen, setIsModalOpen] = useState(true);
-  const [formPhase, setFormPhase] = useState<"search" | "register">("search");
-  const [searchDni, setSearchDni] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-
-  const [isDireccionModalOpen, setIsDireccionModalOpen] = useState(false);
-
-  // Zod hook-form for registration
-  const methods = useForm<PersonaFormType>({
-    resolver: zodResolver(personaSchema),
-    defaultValues: {
-      dni: "",
-      nombres: "",
-      apellidoPaterno: "",
-      apellidoMaterno: "",
-      fechaNacimiento: "",
-      sexo: "",
-      estadoCivil: "",
-      nacionalidad: "PERUANA",
-      direccion: {
-        personaId: 0,
-        departamentoId: 0,
-        provinciaId: 0,
-        distritoId: 0,
-        tipoVia: "AVENIDA",
-        nombreVia: "",
-        numero: "",
-        dpto: "",
-        interior: "",
-        manzana: "",
-        lote: "",
-        block: "",
-        etapa: "",
-        tipoZona: "URBANA",
-        nombreZona: "",
-        referencia: "",
-        refiereEssalud: false,
-      },
-    },
-  });
+  const {
+    selectedPersona,
+    isModalOpen,
+    setIsModalOpen,
+    formPhase,
+    setFormPhase,
+    searchDni,
+    setSearchDni,
+    isSearching,
+    isDireccionModalOpen,
+    setIsDireccionModalOpen,
+    activeTab,
+    setActiveTab,
+    categoria,
+    setCategoria,
+    methods,
+    handleOpenSearch,
+    handleSearch,
+    isCreating,
+    onSubmitRegister,
+    isBlocking,
+    createTPersona,
+    isCreatingTPersona,
+    companyId,
+    telefono,
+    setTelefono,
+    email,
+    setEmail,
+    isAddAddressModalOpen,
+    setIsAddAddressModalOpen,
+    setSelectedPersona,
+  } = useTRegistroForm();
 
   const {
     register,
     handleSubmit,
-    setValue,
-    reset,
     formState: { errors },
     watch,
   } = methods;
@@ -98,170 +89,98 @@ export function TRegistroCrearPage() {
     watchDireccion.nombreVia &&
     watchDireccion.numero;
 
-  // Reset form phase and selected person when modal opens
-  const handleOpenSearch = () => {
-    setFormPhase("search");
-    setSearchDni("");
-    setIsModalOpen(true);
-  };
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!/^\d{8}$/.test(searchDni)) {
-      toast.error("El DNI debe tener exactamente 8 dígitos numéricos");
+  const handleGrabar = () => {
+    if (!selectedPersona) {
+      toast.error("Debe buscar y seleccionar una persona primero");
       return;
     }
 
-    try {
-      setIsSearching(true);
-      const res = await Api.get(`/persona/dni/${searchDni}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.data && res.data.body) {
-        toast.success("Persona encontrada en el sistema");
-        setSelectedPersona(res.data.body);
-        setIsModalOpen(false);
-      } else {
-        toast.info("La persona no existe. Por favor, complete el registro.");
-        setFormPhase("register");
-        reset({
-          dni: searchDni,
-          nombres: "",
-          apellidoPaterno: "",
-          apellidoMaterno: "",
-          fechaNacimiento: "",
-          sexo: "",
-          estadoCivil: "",
-          nacionalidad: "PERUANA",
-          direccion: {
-            personaId: 0,
-            departamentoId: 0,
-            provinciaId: 0,
-            distritoId: 0,
-            tipoVia: "AVENIDA",
-            nombreVia: "",
-            numero: "",
-            dpto: "",
-            interior: "",
-            manzana: "",
-            lote: "",
-            block: "",
-            etapa: "",
-            tipoZona: "URBANA",
-            nombreZona: "",
-            referencia: "",
-            refiereEssalud: false,
-          },
-        });
-        setValue("dni", searchDni);
-      }
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-
-      if (error.response?.status === 404) {
-        toast.info("La persona no existe. Por favor, complete el registro.");
-        setFormPhase("register");
-        reset({
-          dni: searchDni,
-          nombres: "",
-          apellidoPaterno: "",
-          apellidoMaterno: "",
-          fechaNacimiento: "",
-          sexo: "",
-          estadoCivil: "",
-          nacionalidad: "PERUANA",
-          direccion: {
-            personaId: 0,
-            departamentoId: 0,
-            provinciaId: 0,
-            distritoId: 0,
-            tipoVia: "AVENIDA",
-            nombreVia: "",
-            numero: "",
-            dpto: "",
-            interior: "",
-            manzana: "",
-            lote: "",
-            block: "",
-            etapa: "",
-            tipoZona: "URBANA",
-            nombreZona: "",
-            referencia: "",
-            refiereEssalud: false,
-          },
-        });
-        setValue("dni", searchDni);
-      } else {
-        toast.error("Error al buscar la persona por DNI");
-      }
-    } finally {
-      setIsSearching(false);
+    if (!companyId) {
+      toast.error("Debe seleccionar una empresa activa");
+      return;
     }
+
+    if (!telefono.trim()) {
+      toast.error("Debe ingresar un número de teléfono para el prestador");
+      return;
+    }
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Debe ingresar un correo electrónico válido para el prestador");
+      return;
+    }
+
+    // Call the create mutation. Since other fields are not implemented yet,
+    // we send the required ones and mock the rest to satisfy DB constraints.
+    // The user will build the other tabs later.
+    createTPersona({
+      personaId: selectedPersona.personaId,
+      categoria: categoria,
+      tEmpresaCompanyId: companyId,
+      // Default values to satisfy backend DTO validation
+      periodoInicio: new Date().toISOString(),
+      fechaInicio: new Date().toISOString(),
+      tipoTrabajador: "EMPLEADO",
+      fechaIngreso: new Date().toISOString(),
+      regimenLaboral: "D_LEG_728",
+      ocupacionId: 1, // Default seed ID
+      tipoContrato: "PLAZO_INDETERMINADO",
+      tipoPago: "EFECTIVO",
+      entidadId: 1, // Default seed ID
+      montoRemuneracionInicial: 1025,
+      regimenSalud: "ESSALUD_REGULAR",
+      fechaInicioSalud: new Date().toISOString(),
+      regimenPensionario: "SPP_INTEGRA",
+      fechaInicioPensionario: new Date().toISOString(),
+      sctr: false,
+      situacionEducativaId: 1, // Default seed ID
+      estudios: [],
+      quintaCategoriaExonerada: false,
+      evitaDobleImposicion: false,
+      periodoIngreso: "MENSUAL",
+      telefono: telefono,
+      email: email,
+    });
   };
 
-  // Create persona mutation
-  const { mutate: createPersona, isPending: isCreating } = useMutation({
-    mutationFn: async (formData: PersonaFormType) => {
-      const res = await Api.post("/persona", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return res.data as ApiResponse<PersonaData>;
+  const categoriesList: { value: CategoriaType; label: string; desc: string }[] = [
+    {
+      value: "TRABAJADOR",
+      label: "Trabajador",
+      desc: "Persona física que presta servicios bajo subordinación.",
     },
-    onSuccess: (data) => {
-      toast.success("Persona registrada y seleccionada con éxito");
-      setSelectedPersona(data.body);
-      setIsModalOpen(false);
+    {
+      value: "PENSIONISTA",
+      label: "Pensionista",
+      desc: "Persona que percibe pensión de jubilación, invalidez o sobrevivencia.",
     },
-    onError: () => {
-      toast.error("Error al registrar la persona");
+    {
+      value: "PERSONAL_FORMACION_LABORAL",
+      label: "Personal en formación laboral",
+      desc: "Practicantes, aprendices o personas bajo modalidades formativas.",
     },
-  });
-
-  const onSubmitRegister = (data: PersonaFormType) => {
-    createPersona(data);
-  };
-
-  const isBlocking = !selectedPersona;
+    {
+      value: "PERSONAL_TERCERO",
+      label: "Personal de Terceros",
+      desc: "Trabajadores destacados por contratistas o subcontratistas.",
+    },
+  ];
 
   return (
-    <DashboardLayout title="Registrar Persona" icon={<FiPlus className="text-sm" />}>
+    <DashboardLayout title="Registrar T-Registro" icon={<FiPlus className="text-sm" />}>
       <div className="flex flex-col gap-6">
-        {/* Selected Persona Summary Card */}
+
+        {/* Datos de Identificación (Siempre visible si está seleccionada) */}
         {selectedPersona ? (
-          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-bento-control bg-bento-secondary/15 text-bento-secondary flex items-center justify-center shrink-0">
-                <FiUser className="text-xl" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block leading-none">Persona Seleccionada</span>
-                <h4 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100 mt-1 leading-tight">
-                  DNI: {selectedPersona.dni}
-                </h4>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
-                  {selectedPersona.email && <span className="flex items-center gap-1"><FiMail className="shrink-0 text-[10px]" /> {selectedPersona.email}</span>}
-                  {selectedPersona.telefono && <span className="flex items-center gap-1"><FiPhone className="shrink-0 text-[10px]" /> {selectedPersona.telefono}</span>}
-                  {selectedPersona.primeraDireccion && selectedPersona.primeraDireccion.length > 0 && (
-                    <span className="flex items-center gap-1 truncate max-w-[450px]" title={formatDireccion(selectedPersona.primeraDireccion[0])}>
-                      <FiMapPin className="shrink-0 text-[10px]" />
-                      {formatDireccion(selectedPersona.primeraDireccion[0])}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={handleOpenSearch}
-              className="w-full sm:w-auto px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 hover:border-bento-secondary/50 rounded-bento-control text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:text-bento-secondary transition-all duration-200 cursor-pointer shadow-sm text-center shrink-0"
-            >
-              Cambiar Persona
-            </button>
-          </div>
+          <PersonaSummaryCard
+            persona={selectedPersona}
+            onCambiarPersona={handleOpenSearch}
+            telefono={telefono}
+            onChangeTelefono={setTelefono}
+            email={email}
+            onChangeEmail={setEmail}
+            onAddAddress={() => setIsAddAddressModalOpen(true)}
+          />
         ) : (
           <div className="bg-bento-danger/5 border border-bento-danger/15 rounded-bento-card p-6 text-center shadow-sm">
             <div className="w-10 h-10 rounded-full bg-bento-danger/10 text-bento-danger flex items-center justify-center mx-auto mb-3">
@@ -280,19 +199,65 @@ export function TRegistroCrearPage() {
           </div>
         )}
 
-        {/* Empty Page / Form for TPersona */}
-        <div className={`bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-6 shadow-sm flex flex-col transition-all duration-300 ${!selectedPersona ? "blur-sm opacity-40 pointer-events-none select-none" : ""}`}>
-          <h3 className="font-bold text-bento-text dark:text-zinc-50 text-base mb-4">
-            Datos Laborales (TPersona)
-          </h3>
-          
-          <div className="border border-dashed border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-12 flex flex-col items-center justify-center text-center">
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 font-medium">
-              Formulario de Relación Laboral - Listo para la implementación de {selectedPersona?.dni}
+        {/* Categoría & Tabs (Deshabilitado si no hay persona seleccionada) */}
+        <div
+          className={`bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col transition-all duration-300 ${!selectedPersona ? "blur-sm opacity-45 pointer-events-none select-none" : ""
+            }`}
+        >
+          <div className="border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4 mb-5">
+            <h3 className="font-bold text-bento-text dark:text-zinc-50 text-base leading-none">
+              Categoría
+            </h3>
+            <p className="text-xs text-zinc-500 mt-1.5 leading-none">
+              Especifique la categoría y configure la relación de prestaciones correspondientes
             </p>
-            <p className="text-[10px] text-zinc-450 dark:text-zinc-500 mt-1 max-w-sm">
-              Aquí puedes añadir campos como ocupación, régimen laboral, ingresos, situación académica, etc.
-            </p>
+          </div>
+
+          {/* Tabs Navigation & Content */}
+          <Tabs defaultValue="resumen" className="mt-4" onChange={(val) => setActiveTab(val as any)}>
+            <TabHeader>
+              <TabHeaderButton value="resumen">Resumen de Prestadores</TabHeaderButton>
+              <TabHeaderButton value="trabajador" className="opacity-50 cursor-not-allowed" disabled={true}>
+                Trabajador
+              </TabHeaderButton>
+              <TabHeaderButton value="pensionista" className="opacity-50 cursor-not-allowed" disabled={true}>
+                Pensionista
+              </TabHeaderButton>
+              <TabHeaderButton value="formacion" className="opacity-50 cursor-not-allowed" disabled={true}>
+                Personal en formación laboral
+              </TabHeaderButton>
+            </TabHeader>
+
+            <TabBody className="py-4 min-h-[220px]">
+              <Tab value="resumen">
+                <FormCardRadioGroup
+                  label="Seleccione el tipo de prestador que desea registrar para esta persona:"
+                  name="categoriaPrestador"
+                  value={categoria}
+                  onChange={(val) => setCategoria(val as CategoriaType)}
+                  options={categoriesList}
+                />
+              </Tab>
+            </TabBody>
+          </Tabs>
+
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3.5 pt-4 border-t border-zinc-200/40 dark:border-zinc-800/40 shrink-0">
+            <button
+              type="button"
+              onClick={() => router.push("/t-registro")}
+              className="px-4.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-bold text-zinc-600 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
+            >
+              Retornar
+            </button>
+            <button
+              type="button"
+              onClick={handleGrabar}
+              disabled={isCreatingTPersona}
+              className="px-5 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-extrabold shadow-md transition-all cursor-pointer border border-zinc-900/10 flex items-center gap-1.5"
+            >
+              {isCreatingTPersona ? "Grabando..." : "Grabar"}
+            </button>
           </div>
         </div>
       </div>
@@ -308,7 +273,7 @@ export function TRegistroCrearPage() {
 
           {/* Modal Box */}
           <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-overlay shadow-xl p-6 sm:p-7 flex flex-col max-h-[85vh]">
-            
+
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5 shrink-0">
               <div className="flex items-center gap-2.5">
@@ -366,7 +331,7 @@ export function TRegistroCrearPage() {
                     <button
                       type="button"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-600 dark:text-zinc-300 cursor-pointer"
+                      className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-650 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -431,65 +396,31 @@ export function TRegistroCrearPage() {
                       error={errors.fechaNacimiento?.message}
                     />
 
-                    <div className="flex flex-col w-full">
-                      <label
-                        htmlFor="sexo"
-                        className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                      >
-                        Sexo
-                      </label>
-                      <select
-                        id="sexo"
-                        disabled={isCreating}
-                        {...register("sexo")}
-                        className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                          errors.sexo
-                            ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                            : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
-                        }`}
-                      >
-                        <option value="">Seleccione...</option>
-                        <option value="MASCULINO">MASCULINO</option>
-                        <option value="FEMENINO">FEMENINO</option>
-                      </select>
-                      {errors.sexo && (
-                        <p className="mt-1.5 text-xs text-bento-danger font-medium animate-fadeIn">
-                          <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
-                          {errors.sexo.message}
-                        </p>
-                      )}
-                    </div>
+                    <FormSelect
+                      label="Sexo"
+                      name="sexo"
+                      disabled={isCreating}
+                      register={register("sexo")}
+                      error={errors.sexo?.message}
+                      options={[
+                        { value: "MASCULINO", label: "MASCULINO" },
+                        { value: "FEMENINO", label: "FEMENINO" },
+                      ]}
+                    />
 
-                    <div className="flex flex-col w-full">
-                      <label
-                        htmlFor="estadoCivil"
-                        className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                      >
-                        Estado Civil
-                      </label>
-                      <select
-                        id="estadoCivil"
-                        disabled={isCreating}
-                        {...register("estadoCivil")}
-                        className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                          errors.estadoCivil
-                            ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                            : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
-                        }`}
-                      >
-                        <option value="">Seleccione...</option>
-                        <option value="SOLTERO">SOLTERO(A)</option>
-                        <option value="CASADO">CASADO(A)</option>
-                        <option value="DIVORCIADO">DIVORCIADO(A)</option>
-                        <option value="VIUDO">VIUDO(A)</option>
-                      </select>
-                      {errors.estadoCivil && (
-                        <p className="mt-1.5 text-xs text-bento-danger font-medium animate-fadeIn">
-                          <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
-                          {errors.estadoCivil.message}
-                        </p>
-                      )}
-                    </div>
+                    <FormSelect
+                      label="Estado Civil"
+                      name="estadoCivil"
+                      disabled={isCreating}
+                      register={register("estadoCivil")}
+                      error={errors.estadoCivil?.message}
+                      options={[
+                        { value: "SOLTERO", label: "SOLTERO(A)" },
+                        { value: "CASADO", label: "CASADO(A)" },
+                        { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
+                        { value: "VIUDO", label: "VIUDO(A)" },
+                      ]}
+                    />
 
                     <FormInput
                       label="Nacionalidad"
@@ -538,7 +469,7 @@ export function TRegistroCrearPage() {
                       type="button"
                       onClick={() => setFormPhase("search")}
                       disabled={isCreating}
-                      className="px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-500 cursor-pointer"
+                      className="px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-650 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
                     >
                       &larr; Volver a Buscar
                     </button>
@@ -556,6 +487,20 @@ export function TRegistroCrearPage() {
 
           </div>
         </div>
+      )}
+
+      {selectedPersona && (
+        <AddAddressModal
+          isOpen={isAddAddressModalOpen}
+          onClose={() => setIsAddAddressModalOpen(false)}
+          personaId={selectedPersona.personaId}
+          onSuccess={(newAddress) => {
+            setSelectedPersona({
+              ...selectedPersona,
+              direcciones: [...(selectedPersona.direcciones || []), newAddress],
+            });
+          }}
+        />
       )}
     </DashboardLayout>
   );

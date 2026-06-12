@@ -237,13 +237,13 @@ export function AdminPersonasPage() {
                       <td
                         className="px-6 py-4 text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]"
                         title={
-                          per.primeraDireccion && per.primeraDireccion.length > 0
-                            ? formatDireccion(per.primeraDireccion[0])
+                          per.direcciones && per.direcciones.length > 0
+                            ? formatDireccion(per.direcciones[0])
                             : "Sin dirección"
                         }
                       >
-                        {per.primeraDireccion && per.primeraDireccion.length > 0
-                          ? formatDireccion(per.primeraDireccion[0])
+                        {per.direcciones && per.direcciones.length > 0
+                          ? formatDireccion(per.direcciones[0])
                           : "Sin dirección"}
                       </td>
                       <td className="px-6 py-4 text-right">
