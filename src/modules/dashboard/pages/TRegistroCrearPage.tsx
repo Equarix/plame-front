@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { FormProvider } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -16,7 +17,7 @@ import {
 } from "react-icons/fi";
 import { toast } from "sonner";
 
-import { type DireccionFormType } from "../../admin/schemas/persona.schema";
+import { type DireccionFormType, type PersonaFormType } from "../../admin/schemas/persona.schema";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { FormInput } from "@/components/forms/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect";
@@ -24,7 +25,7 @@ import { DireccionModal } from "../../persona/components/DireccionModal";
 import { AddAddressModal } from "../../persona/components/AddAddressModal";
 import { PersonaSummaryCard } from "../../persona/components/PersonaSummaryCard";
 import { formatDireccion } from "@/utils/address";
-import { useTRegistroForm, CategoriaType } from "../hooks/useTRegistroForm";
+import { useTRegistroForm, CategoriaType, type EstudiosInput } from "../hooks/useTRegistroForm";
 import { Tabs, TabHeader, TabHeaderButton, TabBody, Tab } from "@/components/Tabs/Tabs";
 import { ResumenTab } from "../components/ResumenTab";
 import { TrabajadorTab } from "../components/TrabajadorTab";
@@ -92,6 +93,9 @@ export function TRegistroCrearPage() {
     watchDireccion.nombreVia &&
     watchDireccion.numero;
 
+  // Estudios del trabajador — state elevado a nivel de página
+  const [estudios, setEstudios] = React.useState<EstudiosInput[]>([]);
+
   const handleGrabar = () => {
     if (!selectedPersona) {
       toast.error("Debe buscar y seleccionar una persona primero");
@@ -113,36 +117,89 @@ export function TRegistroCrearPage() {
       return;
     }
 
-    // Call the create mutation. Since other fields are not implemented yet,
-    // we send the required ones and mock the rest to satisfy DB constraints.
-    // The user will build the other tabs later.
+    const formValues = methods.getValues() as PersonaFormType & {
+      ocupacionId?: string | number;
+      fechaInicio?: string;
+      tipoTrabajador?: string;
+      regimenLaboral?: string;
+      tipoContrato?: string;
+      tipoPago?: string;
+      entidadId?: string | number;
+      montoRemuneracion?: string | number;
+      periodoIngreso?: string;
+      jornadaLaboral?: string;
+      codLocal?: string;
+      situacionEspecial?: string;
+      discapacidad?: string;
+      sindicalizado?: string;
+      regimenSalud?: string;
+      fechaInicioSalud?: string;
+      fechaFinSalud?: string;
+      regimenPensionario?: string;
+      fechaInicioPensionario?: string;
+      fechaFinPensionario?: string;
+      CUSPP?: string;
+      sctr?: string;
+      pension?: string;
+      salud?: string;
+      fechaInicioSaludPension?: string;
+      fechaFinSaludPension?: string;
+      situacionEducativaId?: string | number;
+      quintaCategoriaExonerada?: string;
+      evitaDobleImposicion?: string;
+    };
+    const activeOcupacionId = formValues.ocupacionId ? Number(formValues.ocupacionId) : undefined;
+
+    if (categoria === "TRABAJADOR" && !activeOcupacionId) {
+      toast.error("Debe seleccionar una ocupación para el trabajador");
+      return;
+    }
+
+    const isSctrActive = formValues.sctr === "SI";
+
+    // Call the create mutation.
     createTPersona({
       personaId: selectedPersona.personaId,
       categoria: categoria,
       tEmpresaCompanyId: companyId,
-      // Default values to satisfy backend DTO validation
+      // Dynamic form values if provided, falling back to valid defaults
       periodoInicio: new Date().toISOString(),
-      fechaInicio: new Date().toISOString(),
-      tipoTrabajador: "EMPLEADO",
+      fechaInicio: formValues.fechaInicio ? new Date(formValues.fechaInicio).toISOString() : new Date().toISOString(),
+      tipoTrabajador: formValues.tipoTrabajador || "EMPLEADO",
       fechaIngreso: new Date().toISOString(),
-      regimenLaboral: "D_LEG_728",
-      ocupacionId: 1, // Default seed ID
-      tipoContrato: "PLAZO_INDETERMINADO",
-      tipoPago: "EFECTIVO",
-      entidadId: 1, // Default seed ID
-      montoRemuneracionInicial: 1025,
-      regimenSalud: "ESSALUD_REGULAR",
-      fechaInicioSalud: new Date().toISOString(),
-      regimenPensionario: "SPP_INTEGRA",
-      fechaInicioPensionario: new Date().toISOString(),
-      sctr: false,
-      situacionEducativaId: 1, // Default seed ID
-      estudios: [],
-      quintaCategoriaExonerada: false,
-      evitaDobleImposicion: false,
-      periodoIngreso: "MENSUAL",
+      regimenLaboral: formValues.regimenLaboral || "D_LEG_728",
+      ocupacionId: activeOcupacionId || 1, // Dynamically selected or fallback
+      tipoContrato: formValues.tipoContrato || "PLAZO_INDETERMINADO",
+      tipoPago: formValues.tipoPago || "EFECTIVO",
+      entidadId: formValues.entidadId ? Number(formValues.entidadId) : 1, // Default seed ID
+      montoRemuneracionInicial: formValues.montoRemuneracion ? Number(formValues.montoRemuneracion) : 1025,
+      
+      // Social Security fields
+      regimenSalud: formValues.regimenSalud || "ESSALUD_REGULAR",
+      fechaInicioSalud: formValues.fechaInicioSalud ? new Date(formValues.fechaInicioSalud).toISOString() : new Date().toISOString(),
+      fechaFinSalud: formValues.fechaFinSalud ? new Date(formValues.fechaFinSalud).toISOString() : undefined,
+      regimenPensionario: formValues.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
+      fechaInicioPensionario: formValues.fechaInicioPensionario ? new Date(formValues.fechaInicioPensionario).toISOString() : new Date().toISOString(),
+      fechaFinPensionario: formValues.fechaFinPensionario ? new Date(formValues.fechaFinPensionario).toISOString() : undefined,
+      CUSPP: (formValues.regimenPensionario && formValues.regimenPensionario.startsWith("SPP_")) ? (formValues.CUSPP || undefined) : undefined,
+      sctr: isSctrActive,
+      pension: isSctrActive ? (formValues.pension || "ONP") : undefined,
+      salud: isSctrActive ? (formValues.salud || "ESSALUD") : undefined,
+      fechaInicioSaludPension: isSctrActive ? (formValues.fechaInicioSaludPension ? new Date(formValues.fechaInicioSaludPension).toISOString() : new Date().toISOString()) : undefined,
+      fechaFinSaludPension: isSctrActive && formValues.fechaFinSaludPension ? new Date(formValues.fechaFinSaludPension).toISOString() : undefined,
+
+      situacionEducativaId: formValues.situacionEducativaId ? Number(formValues.situacionEducativaId) : 1,
+      estudios: estudios,
+      quintaCategoriaExonerada: formValues.quintaCategoriaExonerada === "SI",
+      evitaDobleImposicion: formValues.evitaDobleImposicion === "SI",
+      periodoIngreso: formValues.periodoIngreso || "MENSUAL",
       telefono: telefono,
       email: email,
+      jornadaLaboral: formValues.jornadaLaboral || "MAXIMA",
+      codlocal: formValues.codLocal || "0000",
+      situacionEspecial: formValues.situacionEspecial || "NINGUNA",
+      discapacidad: formValues.discapacidad === "SI",
+      sindicalizado: formValues.sindicalizado === "SI",
     });
   };
 
@@ -203,88 +260,93 @@ export function TRegistroCrearPage() {
         )}
 
         {/* Categoría & Tabs (Deshabilitado si no hay persona seleccionada) */}
-        <div
-          className={`bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col transition-all duration-300 ${!selectedPersona ? "blur-sm opacity-45 pointer-events-none select-none" : ""
-            }`}
-        >
-          <div className="border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4 mb-5">
-            <h3 className="font-bold text-bento-text dark:text-zinc-50 text-base leading-none">
-              Categoría
-            </h3>
-            <p className="text-xs text-zinc-500 mt-1.5 leading-none">
-              Especifique la categoría y configure la relación de prestaciones correspondientes
-            </p>
+        <FormProvider {...methods}>
+          <div
+            className={`bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col transition-all duration-300 ${!selectedPersona ? "blur-sm opacity-45 pointer-events-none select-none" : ""
+              }`}
+          >
+            <div className="border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4 mb-5">
+              <h3 className="font-bold text-bento-text dark:text-zinc-50 text-base leading-none">
+                Categoría
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1.5 leading-none">
+                Especifique la categoría y configure la relación de prestaciones correspondientes
+              </p>
+            </div>
+
+            {/* Tabs Navigation & Content */}
+            <Tabs defaultValue="resumen" className="mt-4" onChange={(val) => setActiveTab(val as any)}>
+              <TabHeader>
+                <TabHeaderButton value="resumen">Resumen de Prestadores</TabHeaderButton>
+                <TabHeaderButton
+                  value="trabajador"
+                  disabled={categoria !== "TRABAJADOR"}
+                  className={categoria !== "TRABAJADOR" ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  Trabajador
+                </TabHeaderButton>
+                <TabHeaderButton
+                  value="pensionista"
+                  disabled={categoria !== "PENSIONISTA"}
+                  className={categoria !== "PENSIONISTA" ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  Pensionista
+                </TabHeaderButton>
+                <TabHeaderButton
+                  value="formacion"
+                  disabled={categoria !== "PERSONAL_FORMACION_LABORAL"}
+                  className={categoria !== "PERSONAL_FORMACION_LABORAL" ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  Personal en formación laboral
+                </TabHeaderButton>
+              </TabHeader>
+
+              <TabBody className="py-4 min-h-[220px]">
+                <Tab value="resumen">
+                  <ResumenTab
+                    categoria={categoria}
+                    setCategoria={setCategoria}
+                    categoriesList={categoriesList}
+                  />
+                </Tab>
+
+                <Tab value="trabajador">
+                  <TrabajadorTab
+                    estudios={estudios}
+                    onEstudiosChange={setEstudios}
+                  />
+                </Tab>
+
+                <Tab value="pensionista">
+                  <PensionistaTab />
+                </Tab>
+
+                <Tab value="formacion">
+                  <FormacionTab />
+                </Tab>
+              </TabBody>
+            </Tabs>
+
+            {/* Footer Actions */}
+            <div className="flex justify-end gap-3.5 pt-4 border-t border-zinc-200/40 dark:border-zinc-800/40 shrink-0">
+              <button
+                type="button"
+                onClick={() => router.push("/t-registro")}
+                className="px-4.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-bold text-zinc-600 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
+              >
+                Retornar
+              </button>
+              <button
+                type="button"
+                onClick={handleGrabar}
+                disabled={isCreatingTPersona}
+                className="px-5 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-extrabold shadow-md transition-all cursor-pointer border border-zinc-900/10 flex items-center gap-1.5"
+              >
+                {isCreatingTPersona ? "Grabando..." : "Grabar"}
+              </button>
+            </div>
           </div>
-
-          {/* Tabs Navigation & Content */}
-          <Tabs defaultValue="resumen" className="mt-4" onChange={(val) => setActiveTab(val as any)}>
-            <TabHeader>
-              <TabHeaderButton value="resumen">Resumen de Prestadores</TabHeaderButton>
-              <TabHeaderButton
-                value="trabajador"
-                disabled={categoria !== "TRABAJADOR"}
-                className={categoria !== "TRABAJADOR" ? "opacity-50 cursor-not-allowed" : ""}
-              >
-                Trabajador
-              </TabHeaderButton>
-              <TabHeaderButton
-                value="pensionista"
-                disabled={categoria !== "PENSIONISTA"}
-                className={categoria !== "PENSIONISTA" ? "opacity-50 cursor-not-allowed" : ""}
-              >
-                Pensionista
-              </TabHeaderButton>
-              <TabHeaderButton
-                value="formacion"
-                disabled={categoria !== "PERSONAL_FORMACION_LABORAL"}
-                className={categoria !== "PERSONAL_FORMACION_LABORAL" ? "opacity-50 cursor-not-allowed" : ""}
-              >
-                Personal en formación laboral
-              </TabHeaderButton>
-            </TabHeader>
-
-            <TabBody className="py-4 min-h-[220px]">
-              <Tab value="resumen">
-                <ResumenTab
-                  categoria={categoria}
-                  setCategoria={setCategoria}
-                  categoriesList={categoriesList}
-                />
-              </Tab>
-
-              <Tab value="trabajador">
-                <TrabajadorTab />
-              </Tab>
-
-              <Tab value="pensionista">
-                <PensionistaTab />
-              </Tab>
-
-              <Tab value="formacion">
-                <FormacionTab />
-              </Tab>
-            </TabBody>
-          </Tabs>
-
-          {/* Footer Actions */}
-          <div className="flex justify-end gap-3.5 pt-4 border-t border-zinc-200/40 dark:border-zinc-800/40 shrink-0">
-            <button
-              type="button"
-              onClick={() => router.push("/t-registro")}
-              className="px-4.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-bold text-zinc-600 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
-            >
-              Retornar
-            </button>
-            <button
-              type="button"
-              onClick={handleGrabar}
-              disabled={isCreatingTPersona}
-              className="px-5 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-extrabold shadow-md transition-all cursor-pointer border border-zinc-900/10 flex items-center gap-1.5"
-            >
-              {isCreatingTPersona ? "Grabando..." : "Grabar"}
-            </button>
-          </div>
-        </div>
+        </FormProvider>
       </div>
 
       {/* DNI Search / Registration Modal */}

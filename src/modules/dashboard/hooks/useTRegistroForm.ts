@@ -35,9 +35,16 @@ export interface CreateTPersonaInput {
   montoRemuneracionInicial?: number;
   regimenSalud?: string;
   fechaInicioSalud?: string;
+  fechaFinSalud?: string;
   regimenPensionario?: string;
   fechaInicioPensionario?: string;
+  fechaFinPensionario?: string;
+  CUSPP?: string;
   sctr?: boolean;
+  pension?: string;
+  salud?: string;
+  fechaInicioSaludPension?: string;
+  fechaFinSaludPension?: string;
   situacionEducativaId?: number;
   estudios?: EstudiosInput[];
   quintaCategoriaExonerada?: boolean;
@@ -47,6 +54,11 @@ export interface CreateTPersonaInput {
   fechaInicio?: string;
   telefono?: string;
   email?: string;
+  jornadaLaboral?: string;
+  codlocal?: string;
+  situacionEspecial?: string;
+  discapacidad?: boolean;
+  sindicalizado?: boolean;
 }
 
 export function useTRegistroForm() {
