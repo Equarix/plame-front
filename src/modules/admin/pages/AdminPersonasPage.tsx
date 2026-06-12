@@ -9,6 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
 import { toast } from "sonner";
 import type { ApiResponse, PersonaData } from "@/interface/response.interface";
+import { formatDireccion } from "@/utils/address";
 import {
   FiPlus,
   FiEdit,
@@ -48,8 +49,8 @@ export function AdminPersonasPage() {
   // Filter personas based on search query
   const filteredPersonas = personasList.filter((per) => {
     const dniMatch = per.dni.toLowerCase().includes(searchQuery.toLowerCase());
-    const emailMatch = per.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const telMatch = per.telefono.toLowerCase().includes(searchQuery.toLowerCase());
+    const emailMatch = per.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false;
+    const telMatch = per.telefono?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false;
     const nacMatch = per.nacionalidad.toLowerCase().includes(searchQuery.toLowerCase());
     return dniMatch || emailMatch || telMatch || nacMatch;
   });
@@ -233,8 +234,17 @@ export function AdminPersonasPage() {
                           <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{per.email}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]" title={per.primeraDireccion}>
-                        {per.primeraDireccion}
+                      <td
+                        className="px-6 py-4 text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]"
+                        title={
+                          per.primeraDireccion && per.primeraDireccion.length > 0
+                            ? formatDireccion(per.primeraDireccion[0])
+                            : "Sin dirección"
+                        }
+                      >
+                        {per.primeraDireccion && per.primeraDireccion.length > 0
+                          ? formatDireccion(per.primeraDireccion[0])
+                          : "Sin dirección"}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">

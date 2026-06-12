@@ -63,17 +63,62 @@ export interface SituacionAcademicaData {
   createdAt?: string;
 }
 
+export interface UbigeoDepartamento {
+  idDepartamento: number;
+  departamento: string;
+  idPais: number;
+}
+
+export interface UbigeoProvincia {
+  idProvincia: number;
+  provincia: string;
+  idDepartamento: number;
+}
+
+export interface UbigeoDistrito {
+  idDistrito: number;
+  distrito: string;
+  idProvincia: number;
+}
+
+export interface DireccionData {
+  direccionId: number;
+  personaId: number;
+  departamentoId: number;
+  provinciaId: number;
+  distritoId: number;
+  tipoVia: "AVENIDA" | "CALLE" | "JIRON" | "PASAJE" | "OTRO";
+  nombreVia: string;
+  numero: string;
+  dpto?: string | null;
+  interior?: string | null;
+  manzana?: string | null;
+  lote?: string | null;
+  block?: string | null;
+  etapa?: string | null;
+  tipoZona: "URBANA" | "RURAL" | "OTRO";
+  nombreZona: string;
+  referencia?: string | null;
+  refiereEssalud: boolean;
+  departamento?: UbigeoDepartamento;
+  provincia?: UbigeoProvincia;
+  distrito?: UbigeoDistrito;
+}
+
 export interface PersonaData {
   personaId: number;
   dni: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
   fechaNacimiento: string;
   sexo: string;
   estadoCivil: string;
   nacionalidad: string;
-  primeraDireccion: string;
-  segundaDireccion: string;
-  telefono: string;
-  email: string;
+  primeraDireccion?: DireccionData[];
+  segundaDireccion?: DireccionData;
+  telefono?: string;
+  email?: string;
   createdAt?: string;
   updatedAt?: string;
 }

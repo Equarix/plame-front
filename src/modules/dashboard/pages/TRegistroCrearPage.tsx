@@ -5,7 +5,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FiPlus,
@@ -18,11 +18,22 @@ import {
   FiLock,
 } from "react-icons/fi";
 
-import type { ApiResponse, PersonaData } from "@/interface/response.interface";
-import { personaSchema, type PersonaFormType } from "../../admin/schemas/persona.schema";
+import type { ApiResponse, PersonaData, DireccionData } from "@/interface/response.interface";
+import { personaSchema, type PersonaFormType, type DireccionFormType } from "../../admin/schemas/persona.schema";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { FormInput } from "@/components/forms/FormInput";
+import { DireccionModal } from "../../persona/components/DireccionModal";
+import { formatDireccion } from "@/utils/address";
 import { AxiosError } from "axios";
+
+const getDireccionSummary = (dir: DireccionFormType): string => {
+  const parts = [
+    dir.tipoVia && dir.nombreVia ? `${dir.tipoVia} ${dir.nombreVia}` : null,
+    dir.numero ? `N° ${dir.numero}` : null,
+    dir.tipoZona && dir.nombreZona ? `${dir.tipoZona} ${dir.nombreZona}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : "Dirección registrada";
+};
 
 export function TRegistroCrearPage() {
   const { token } = useAuth();
@@ -33,27 +44,59 @@ export function TRegistroCrearPage() {
   const [searchDni, setSearchDni] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  const [isDireccionModalOpen, setIsDireccionModalOpen] = useState(false);
+
   // Zod hook-form for registration
+  const methods = useForm<PersonaFormType>({
+    resolver: zodResolver(personaSchema),
+    defaultValues: {
+      dni: "",
+      nombres: "",
+      apellidoPaterno: "",
+      apellidoMaterno: "",
+      fechaNacimiento: "",
+      sexo: "",
+      estadoCivil: "",
+      nacionalidad: "PERUANA",
+      direccion: {
+        personaId: 0,
+        departamentoId: 0,
+        provinciaId: 0,
+        distritoId: 0,
+        tipoVia: "AVENIDA",
+        nombreVia: "",
+        numero: "",
+        dpto: "",
+        interior: "",
+        manzana: "",
+        lote: "",
+        block: "",
+        etapa: "",
+        tipoZona: "URBANA",
+        nombreZona: "",
+        referencia: "",
+        refiereEssalud: false,
+      },
+    },
+  });
+
   const {
     register,
     handleSubmit,
     setValue,
     reset,
     formState: { errors },
-  } = useForm<PersonaFormType>({
-    resolver: zodResolver(personaSchema),
-    defaultValues: {
-      dni: "",
-      fechaNacimiento: "",
-      sexo: "",
-      estadoCivil: "",
-      nacionalidad: "PERUANA",
-      primeraDireccion: "",
-      segundaDireccion: "",
-      telefono: "",
-      email: "",
-    },
-  });
+    watch,
+  } = methods;
+
+  const watchDireccion = watch("direccion");
+  const hasDireccionFilled =
+    watchDireccion &&
+    Number(watchDireccion.departamentoId) > 0 &&
+    Number(watchDireccion.provinciaId) > 0 &&
+    Number(watchDireccion.distritoId) > 0 &&
+    watchDireccion.nombreVia &&
+    watchDireccion.numero;
 
   // Reset form phase and selected person when modal opens
   const handleOpenSearch = () => {
@@ -86,14 +129,32 @@ export function TRegistroCrearPage() {
         setFormPhase("register");
         reset({
           dni: searchDni,
+          nombres: "",
+          apellidoPaterno: "",
+          apellidoMaterno: "",
           fechaNacimiento: "",
           sexo: "",
           estadoCivil: "",
           nacionalidad: "PERUANA",
-          primeraDireccion: "",
-          segundaDireccion: "",
-          telefono: "",
-          email: "",
+          direccion: {
+            personaId: 0,
+            departamentoId: 0,
+            provinciaId: 0,
+            distritoId: 0,
+            tipoVia: "AVENIDA",
+            nombreVia: "",
+            numero: "",
+            dpto: "",
+            interior: "",
+            manzana: "",
+            lote: "",
+            block: "",
+            etapa: "",
+            tipoZona: "URBANA",
+            nombreZona: "",
+            referencia: "",
+            refiereEssalud: false,
+          },
         });
         setValue("dni", searchDni);
       }
@@ -105,14 +166,32 @@ export function TRegistroCrearPage() {
         setFormPhase("register");
         reset({
           dni: searchDni,
+          nombres: "",
+          apellidoPaterno: "",
+          apellidoMaterno: "",
           fechaNacimiento: "",
           sexo: "",
           estadoCivil: "",
           nacionalidad: "PERUANA",
-          primeraDireccion: "",
-          segundaDireccion: "",
-          telefono: "",
-          email: "",
+          direccion: {
+            personaId: 0,
+            departamentoId: 0,
+            provinciaId: 0,
+            distritoId: 0,
+            tipoVia: "AVENIDA",
+            nombreVia: "",
+            numero: "",
+            dpto: "",
+            interior: "",
+            manzana: "",
+            lote: "",
+            block: "",
+            etapa: "",
+            tipoZona: "URBANA",
+            nombreZona: "",
+            referencia: "",
+            refiereEssalud: false,
+          },
         });
         setValue("dni", searchDni);
       } else {
@@ -165,9 +244,14 @@ export function TRegistroCrearPage() {
                   DNI: {selectedPersona.dni}
                 </h4>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
-                  <span className="flex items-center gap-1"><FiMail className="shrink-0 text-[10px]" /> {selectedPersona.email}</span>
-                  <span className="flex items-center gap-1"><FiPhone className="shrink-0 text-[10px]" /> {selectedPersona.telefono}</span>
-                  <span className="flex items-center gap-1 truncate max-w-[250px]"><FiMapPin className="shrink-0 text-[10px]" /> {selectedPersona.primeraDireccion}</span>
+                  {selectedPersona.email && <span className="flex items-center gap-1"><FiMail className="shrink-0 text-[10px]" /> {selectedPersona.email}</span>}
+                  {selectedPersona.telefono && <span className="flex items-center gap-1"><FiPhone className="shrink-0 text-[10px]" /> {selectedPersona.telefono}</span>}
+                  {selectedPersona.primeraDireccion && selectedPersona.primeraDireccion.length > 0 && (
+                    <span className="flex items-center gap-1 truncate max-w-[450px]" title={formatDireccion(selectedPersona.primeraDireccion[0])}>
+                      <FiMapPin className="shrink-0 text-[10px]" />
+                      {formatDireccion(selectedPersona.primeraDireccion[0])}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -244,6 +328,7 @@ export function TRegistroCrearPage() {
               </div>
               {!isBlocking && (
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-bento-control text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
                 >
@@ -299,154 +384,174 @@ export function TRegistroCrearPage() {
 
             {/* Content phase 2: Register */}
             {formPhase === "register" && (
-              <form onSubmit={handleSubmit(onSubmitRegister)} className="flex-1 overflow-y-auto pr-1 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormInput
-                    label="DNI"
-                    name="dni"
-                    disabled={true}
-                    register={register("dni")}
-                    error={errors.dni?.message}
-                  />
+              <FormProvider {...methods}>
+                <form onSubmit={handleSubmit(onSubmitRegister)} className="flex-1 overflow-y-auto pr-1 space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormInput
+                      label="DNI"
+                      name="dni"
+                      disabled={true}
+                      register={register("dni")}
+                      error={errors.dni?.message}
+                    />
 
-                  <FormInput
-                    label="Fecha de Nacimiento"
-                    name="fechaNacimiento"
-                    type="date"
-                    disabled={isCreating}
-                    register={register("fechaNacimiento")}
-                    error={errors.fechaNacimiento?.message}
-                  />
-
-                  <div className="flex flex-col w-full">
-                    <label
-                      htmlFor="sexo"
-                      className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                    >
-                      Sexo
-                    </label>
-                    <select
-                      id="sexo"
+                    <FormInput
+                      label="Nombres"
+                      name="nombres"
+                      placeholder="e.g. Juan Carlos"
                       disabled={isCreating}
-                      {...register("sexo")}
-                      className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                        errors.sexo
-                          ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                          : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
-                      }`}
-                    >
-                      <option value="">Seleccione...</option>
-                      <option value="MASCULINO">MASCULINO</option>
-                      <option value="FEMENINO">FEMENINO</option>
-                    </select>
-                    {errors.sexo && (
-                      <p className="mt-1.5 text-xs text-bento-danger font-medium">
-                        {errors.sexo.message}
+                      register={register("nombres")}
+                      error={errors.nombres?.message}
+                    />
+
+                    <FormInput
+                      label="Apellido Paterno"
+                      name="apellidoPaterno"
+                      placeholder="e.g. Pérez"
+                      disabled={isCreating}
+                      register={register("apellidoPaterno")}
+                      error={errors.apellidoPaterno?.message}
+                    />
+
+                    <FormInput
+                      label="Apellido Materno"
+                      name="apellidoMaterno"
+                      placeholder="e.g. Quispe"
+                      disabled={isCreating}
+                      register={register("apellidoMaterno")}
+                      error={errors.apellidoMaterno?.message}
+                    />
+
+                    <FormInput
+                      label="Fecha de Nacimiento"
+                      name="fechaNacimiento"
+                      type="date"
+                      disabled={isCreating}
+                      register={register("fechaNacimiento")}
+                      error={errors.fechaNacimiento?.message}
+                    />
+
+                    <div className="flex flex-col w-full">
+                      <label
+                        htmlFor="sexo"
+                        className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
+                      >
+                        Sexo
+                      </label>
+                      <select
+                        id="sexo"
+                        disabled={isCreating}
+                        {...register("sexo")}
+                        className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
+                          errors.sexo
+                            ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
+                            : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
+                        }`}
+                      >
+                        <option value="">Seleccione...</option>
+                        <option value="MASCULINO">MASCULINO</option>
+                        <option value="FEMENINO">FEMENINO</option>
+                      </select>
+                      {errors.sexo && (
+                        <p className="mt-1.5 text-xs text-bento-danger font-medium animate-fadeIn">
+                          <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
+                          {errors.sexo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col w-full">
+                      <label
+                        htmlFor="estadoCivil"
+                        className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
+                      >
+                        Estado Civil
+                      </label>
+                      <select
+                        id="estadoCivil"
+                        disabled={isCreating}
+                        {...register("estadoCivil")}
+                        className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
+                          errors.estadoCivil
+                            ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
+                            : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
+                        }`}
+                      >
+                        <option value="">Seleccione...</option>
+                        <option value="SOLTERO">SOLTERO(A)</option>
+                        <option value="CASADO">CASADO(A)</option>
+                        <option value="DIVORCIADO">DIVORCIADO(A)</option>
+                        <option value="VIUDO">VIUDO(A)</option>
+                      </select>
+                      {errors.estadoCivil && (
+                        <p className="mt-1.5 text-xs text-bento-danger font-medium animate-fadeIn">
+                          <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
+                          {errors.estadoCivil.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <FormInput
+                      label="Nacionalidad"
+                      name="nacionalidad"
+                      placeholder="e.g. PERUANA"
+                      disabled={isCreating}
+                      register={register("nacionalidad")}
+                      error={errors.nacionalidad?.message}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2 border-t border-zinc-200/40 dark:border-zinc-800/40 pt-4">
+                    <label className="text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 select-none font-medium">
+                      Dirección Principal
+                    </label>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsDireccionModalOpen(true)}
+                        className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 border border-zinc-200 dark:border-zinc-700 rounded-bento-control text-xs font-bold text-zinc-850 dark:text-zinc-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm w-full sm:w-auto"
+                      >
+                        <FiMapPin className="text-sm text-zinc-500" />
+                        {hasDireccionFilled ? "Editar Dirección" : "Registrar Dirección"}
+                      </button>
+                      {hasDireccionFilled && watchDireccion && (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold truncate max-w-[320px]">
+                          {getDireccionSummary(watchDireccion)}
+                        </span>
+                      )}
+                    </div>
+                    {errors.direccion && (
+                      <p className="text-xs text-bento-danger font-medium flex items-center gap-1.5 mt-1 animate-fadeIn">
+                        <span className="inline-block w-1 h-1 rounded-full bg-bento-danger"></span>
+                        Hay errores pendientes en la validación de la dirección.
                       </p>
                     )}
                   </div>
 
-                  <div className="flex flex-col w-full">
-                    <label
-                      htmlFor="estadoCivil"
-                      className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none"
-                    >
-                      Estado Civil
-                    </label>
-                    <select
-                      id="estadoCivil"
-                      disabled={isCreating}
-                      {...register("estadoCivil")}
-                      className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 px-3.5 ${
-                        errors.estadoCivil
-                          ? "border-bento-danger focus:ring-bento-danger/20 focus:border-bento-danger"
-                          : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
-                      }`}
-                    >
-                      <option value="">Seleccione...</option>
-                      <option value="SOLTERO">SOLTERO(A)</option>
-                      <option value="CASADO">CASADO(A)</option>
-                      <option value="DIVORCIADO">DIVORCIADO(A)</option>
-                      <option value="VIUDO">VIUDO(A)</option>
-                    </select>
-                    {errors.estadoCivil && (
-                      <p className="mt-1.5 text-xs text-bento-danger font-medium">
-                        {errors.estadoCivil.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <FormInput
-                    label="Nacionalidad"
-                    name="nacionalidad"
-                    placeholder="e.g. PERUANA"
-                    disabled={isCreating}
-                    register={register("nacionalidad")}
-                    error={errors.nacionalidad?.message}
+                  <DireccionModal
+                    isOpen={isDireccionModalOpen}
+                    onClose={() => setIsDireccionModalOpen(false)}
                   />
 
-                  <FormInput
-                    label="Teléfono"
-                    name="telefono"
-                    placeholder="e.g. 987654321"
-                    disabled={isCreating}
-                    register={register("telefono")}
-                    error={errors.telefono?.message}
-                  />
-
-                  <div className="sm:col-span-2">
-                    <FormInput
-                      label="Correo Electrónico"
-                      name="email"
-                      type="email"
-                      placeholder="e.g. usuario@correo.com"
+                  <div className="flex justify-between items-center pt-4 border-t border-zinc-200/40 dark:border-zinc-800/40 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setFormPhase("search")}
                       disabled={isCreating}
-                      register={register("email")}
-                      error={errors.email?.message}
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <FormInput
-                      label="Dirección Principal"
-                      name="primeraDireccion"
-                      placeholder="Av. Las Flores 123"
+                      className="px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-500 cursor-pointer"
+                    >
+                      &larr; Volver a Buscar
+                    </button>
+                    <button
+                      type="submit"
                       disabled={isCreating}
-                      register={register("primeraDireccion")}
-                      error={errors.primeraDireccion?.message}
-                    />
+                      className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
+                    >
+                      {isCreating ? "Registrando..." : "Registrar Persona"}
+                    </button>
                   </div>
-
-                  <div className="sm:col-span-2">
-                    <FormInput
-                      label="Dirección Secundaria"
-                      name="segundaDireccion"
-                      placeholder="Dpto. 402 - Urb. Primavera"
-                      disabled={isCreating}
-                      register={register("segundaDireccion")}
-                      error={errors.segundaDireccion?.message}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center pt-4 border-t border-zinc-200/40 dark:border-zinc-800/40 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setFormPhase("search")}
-                    disabled={isCreating}
-                    className="px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-semibold text-zinc-500 cursor-pointer"
-                  >
-                    &larr; Volver a Buscar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating}
-                    className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
-                  >
-                    {isCreating ? "Registrando..." : "Registrar Persona"}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </FormProvider>
             )}
 
           </div>
