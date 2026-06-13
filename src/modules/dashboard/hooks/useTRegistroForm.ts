@@ -61,6 +61,16 @@ export interface CreateTPersonaInput {
   sindicalizado?: boolean;
 }
 
+export interface TRegistroSuccessData {
+  dni: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  fechaNacimiento: string;
+  nacionalidad: string;
+  categoria: CategoriaType;
+}
+
 export function useTRegistroForm() {
   const { token, companyId } = useAuth();
 
@@ -81,6 +91,9 @@ export function useTRegistroForm() {
   // Phone and Email state for TPersona
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
+
+  // Success data state
+  const [successData, setSuccessData] = useState<TRegistroSuccessData | null>(null);
 
   // Sync phone and email when selectedPersona changes
   useEffect(() => {
@@ -269,6 +282,17 @@ export function useTRegistroForm() {
     },
     onSuccess: () => {
       toast.success("T-Registro guardado con éxito");
+      if (selectedPersona) {
+        setSuccessData({
+          dni: selectedPersona.dni,
+          nombres: selectedPersona.nombres,
+          apellidoPaterno: selectedPersona.apellidoPaterno,
+          apellidoMaterno: selectedPersona.apellidoMaterno,
+          fechaNacimiento: selectedPersona.fechaNacimiento,
+          nacionalidad: selectedPersona.nacionalidad,
+          categoria: categoria,
+        });
+      }
     },
     onError: () => {
       toast.error("Error al guardar el T-Registro");
@@ -308,5 +332,7 @@ export function useTRegistroForm() {
     setEmail,
     isAddAddressModalOpen,
     setIsAddAddressModalOpen,
+    successData,
+    setSuccessData,
   };
 }

@@ -27,6 +27,54 @@ export function OcupacionAutocomplete() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleSelect = (ocupacion: OcupacionData) => {
+    setValue("ocupacionId", ocupacion.ocupacionId, { shouldValidate: true });
+    setValue("ocupacionNombre", ocupacion.name, { shouldValidate: true });
+    setSearchQuery(ocupacion.name);
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    setValue("ocupacionId", "", { shouldValidate: true });
+    setValue("ocupacionNombre", "", { shouldValidate: true });
+    setSearchQuery("");
+    setResults([]);
+    setIsOpen(false);
+  };
+
+  const handleBlur = (e: React.FocusEvent) => {
+    if (containerRef.current?.contains(e.relatedTarget as Node)) {
+      return;
+    }
+    setIsOpen(false);
+    const exactMatch = results.find(
+      (r) => r.name.trim().toLowerCase() === searchQuery.trim().toLowerCase()
+    );
+    if (exactMatch) {
+      handleSelect(exactMatch);
+    } else {
+      if (selectedOcupacionName) {
+        setSearchQuery(selectedOcupacionName);
+      } else {
+        setSearchQuery("");
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (results.length > 0) {
+        const exactMatch = results.find(
+          (r) => r.name.trim().toLowerCase() === searchQuery.trim().toLowerCase()
+        );
+        handleSelect(exactMatch || results[0]);
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+
   // Sync initial or reset values
   useEffect(() => {
     if (selectedOcupacionName) {
@@ -41,11 +89,17 @@ export function OcupacionAutocomplete() {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
-        // If query was modified but no selection was made, revert to selected name or clear
-        if (selectedOcupacionName) {
-          setSearchQuery(selectedOcupacionName);
+        const exactMatch = results.find(
+          (r) => r.name.trim().toLowerCase() === searchQuery.trim().toLowerCase()
+        );
+        if (exactMatch) {
+          handleSelect(exactMatch);
         } else {
-          setSearchQuery("");
+          if (selectedOcupacionName) {
+            setSearchQuery(selectedOcupacionName);
+          } else {
+            setSearchQuery("");
+          }
         }
       }
     }
@@ -53,7 +107,7 @@ export function OcupacionAutocomplete() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [selectedOcupacionName]);
+  }, [selectedOcupacionName, results, searchQuery]);
 
   // Fetch results when debounced search query changes
   useEffect(() => {
@@ -91,20 +145,7 @@ export function OcupacionAutocomplete() {
     }
   }, [debouncedSearch, selectedOcupacionName, token]);
 
-  const handleSelect = (ocupacion: OcupacionData) => {
-    setValue("ocupacionId", ocupacion.ocupacionId, { shouldValidate: true });
-    setValue("ocupacionNombre", ocupacion.name, { shouldValidate: true });
-    setSearchQuery(ocupacion.name);
-    setIsOpen(false);
-  };
 
-  const handleClear = () => {
-    setValue("ocupacionId", "", { shouldValidate: true });
-    setValue("ocupacionNombre", "", { shouldValidate: true });
-    setSearchQuery("");
-    setResults([]);
-    setIsOpen(false);
-  };
 
   return (
     <div ref={containerRef} className="grid grid-cols-3 gap-4 items-start w-full relative">
@@ -141,6 +182,8 @@ export function OcupacionAutocomplete() {
             onFocus={() => {
               if (results.length > 0) setIsOpen(true);
             }}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
             placeholder="Escriba para buscar ocupación (ej. Psicólogo)..."
             className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all duration-200 h-11 pl-3.5 pr-10 ${
               errors.ocupacionId
@@ -186,7 +229,10 @@ export function OcupacionAutocomplete() {
                   <button
                     key={ocupacion.ocupacionId}
                     type="button"
-                    onClick={() => handleSelect(ocupacion)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(ocupacion);
+                    }}
                     className={`w-full text-left px-3.5 py-2.5 text-xs font-bold transition-all flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer ${
                       isSelected
                         ? "text-bento-secondary bg-bento-secondary/5 dark:bg-bento-secondary/5"

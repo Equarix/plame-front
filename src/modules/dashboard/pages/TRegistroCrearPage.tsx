@@ -31,6 +31,7 @@ import { ResumenTab } from "../components/ResumenTab";
 import { TrabajadorTab } from "../components/TrabajadorTab";
 import { PensionistaTab } from "../components/PensionistaTab";
 import { FormacionTab } from "../components/FormacionTab";
+import { TRegistroSuccessScreen } from "../components/TRegistroSuccessScreen";
 
 const getDireccionSummary = (dir: DireccionFormType): string => {
   const parts = [
@@ -75,6 +76,8 @@ export function TRegistroCrearPage() {
     isAddAddressModalOpen,
     setIsAddAddressModalOpen,
     setSelectedPersona,
+    successData,
+    setSuccessData,
   } = useTRegistroForm();
 
   const {
@@ -95,6 +98,20 @@ export function TRegistroCrearPage() {
 
   // Estudios del trabajador — state elevado a nivel de página
   const [estudios, setEstudios] = React.useState<EstudiosInput[]>([]);
+
+  if (successData) {
+    return (
+      <DashboardLayout title="Registrar T-Registro" icon={<FiPlus className="text-sm" />}>
+        <TRegistroSuccessScreen
+          data={successData}
+          onRetornar={() => {
+            setSuccessData(null);
+            router.push("/t-registro");
+          }}
+        />
+      </DashboardLayout>
+    );
+  }
 
   const handleGrabar = () => {
     if (!selectedPersona) {
