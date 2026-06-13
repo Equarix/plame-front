@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import path from "path";
+import fs from "fs";
 import {
   pdf,
   Document,
@@ -9,6 +11,15 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import React from "react";
+
+const logoPath = path.join(process.cwd(), "public", "logo-sunat.png");
+let logoDataUri = "";
+try {
+  const logoBuffer = fs.readFileSync(logoPath);
+  logoDataUri = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+} catch (e) {
+  console.error("Failed to read logo-sunat.png:", e);
+}
 
 // Define strict types for the payload
 interface EstudiosPDFInput {
@@ -102,6 +113,11 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flexDirection: "column",
+  },
+  logoImage: {
+    width: 110,
+    height: 35,
+    objectFit: "contain",
   },
   sunatTitle: {
     fontSize: 16,
@@ -353,11 +369,7 @@ function TRegistroPDF({
         {/* Header */}
         <View style={styles.headerContainer}>
           <View style={styles.headerLeft}>
-            <Text style={styles.sunatTitle}>SUNAT</Text>
-            <Text style={styles.sunatSubText}>
-              SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACION
-              TRIBUTARIA
-            </Text>
+            <Image src={logoDataUri} style={styles.logoImage} />
           </View>
           <Text style={styles.headerRight}>
             T-Registro: Registro de Prestadores
@@ -699,11 +711,7 @@ function TRegistroPDF({
         {/* Header */}
         <View style={styles.headerContainer}>
           <View style={styles.headerLeft}>
-            <Text style={styles.sunatTitle}>SUNAT</Text>
-            <Text style={styles.sunatSubText}>
-              SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACION
-              TRIBUTARIA
-            </Text>
+            <Image src={logoDataUri} style={styles.logoImage} />
           </View>
           <Text style={styles.headerRight}>
             T-Registro: Registro de Prestadores
@@ -980,17 +988,13 @@ export async function POST(request: Request) {
     const orderId = payload.tPersonaId
       ? String(payload.tPersonaId).padStart(8, "0")
       : String(Math.floor(10000000 + Math.random() * 90000000));
-    
+
     // Use createAt as timestamp, fallback to current time if missing
     const timestamp = payload.createAt || new Date().toISOString();
 
     // Render react-pdf to buffer
     const pdfStream = await pdf(
-      <TRegistroPDF
-        data={payload}
-        orderId={orderId}
-        timestamp={timestamp}
-      />,
+      <TRegistroPDF data={payload} orderId={orderId} timestamp={timestamp} />,
     ).toBlob();
 
     return new Response(pdfStream, {
