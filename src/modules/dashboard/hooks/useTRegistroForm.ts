@@ -1,15 +1,27 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/context/AuthContext";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import type { ApiResponse, PersonaData } from "@/interface/response.interface";
-import { personaSchema, type PersonaFormType } from "../../admin/schemas/persona.schema";
+import type {
+  ApiResponse,
+  PersonaData,
+  EmpresaData,
+} from "@/interface/response.interface";
+import {
+  personaSchema,
+  type PersonaFormType,
+} from "../../admin/schemas/persona.schema";
+import { formatDireccion } from "@/utils/address";
 
-export type CategoriaType = "TRABAJADOR" | "PENSIONISTA" | "PERSONAL_FORMACION_LABORAL" | "PERSONAL_TERCERO";
+export type CategoriaType =
+  | "TRABAJADOR"
+  | "PENSIONISTA"
+  | "PERSONAL_FORMACION_LABORAL"
+  | "PERSONAL_TERCERO";
 
 export interface EstudiosInput {
   formacionCompleta: string;
@@ -62,19 +74,92 @@ export interface CreateTPersonaInput {
 }
 
 export interface TRegistroSuccessData {
-  dni: string;
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  fechaNacimiento: string;
-  nacionalidad: string;
+  empleador: {
+    ruc: string;
+    name: string;
+    direccion: string;
+  };
+  trabajador: {
+    dni: string;
+    nombres: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+    fechaNacimiento: string;
+    sexo: string;
+    estadoCivil: string;
+    nacionalidad: string;
+    telefono: string;
+    email: string;
+    direccion: string;
+  };
+  laborales: {
+    fechaInicio: string;
+    tipoTrabajador: string;
+    regimenLaboral: string;
+    ocupacion: string;
+    tipoContrato: string;
+    tipoPago: string;
+    periodoIngreso: string;
+    montoRemuneracion: number;
+    codlocal: string;
+    discapacidad: boolean;
+    sindicalizado: boolean;
+    jornadaLaboral: string;
+    situacionEspecial: string;
+  };
+  seguridadSocial: {
+    regimenSalud: string;
+    fechaInicioSalud: string;
+    fechaFinSalud?: string;
+    regimenPensionario: string;
+    fechaInicioPensionario: string;
+    fechaFinPensionario?: string;
+    CUSPP?: string;
+    sctr: boolean;
+    pension?: string;
+    salud?: string;
+    fechaInicioSaludPension?: string;
+    fechaFinSaludPension?: string;
+  };
+  educacion: {
+    situacionEducativa: string;
+    estudios: EstudiosInput[];
+  };
+  adicionales: {
+    quintaCategoriaExonerada: boolean;
+    evitaDobleImposicion: boolean;
+  };
   categoria: CategoriaType;
+  tPersonaId?: number;
+  createAt?: string;
+}
+
+export interface ExtendedFormValues extends PersonaFormType {
+  ocupacionNombre?: string;
+  situacionEducativaNombre?: string;
 }
 
 export function useTRegistroForm() {
   const { token, companyId } = useAuth();
 
-  const [selectedPersona, setSelectedPersona] = useState<PersonaData | undefined>(undefined);
+  const { data: companiesResponse } = useQuery<ApiResponse<EmpresaData[]>>({
+    queryKey: ["public-companies", token],
+    queryFn: async () => {
+      const res = await Api.get("/t-empresa/public", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token && !!companyId,
+  });
+
+  const activeCompany = companiesResponse?.body?.find(
+    (c) => c.companyId === companyId,
+  );
+
+  const [selectedPersona, setSelectedPersona] = useState<
+    PersonaData | undefined
+  >(undefined);
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [formPhase, setFormPhase] = useState<"search" | "register">("search");
   const [searchDni, setSearchDni] = useState("");
@@ -83,7 +168,9 @@ export function useTRegistroForm() {
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
 
   // Tabs state
-  const [activeTab, setActiveTab] = useState<"resumen" | "trabajador" | "pensionista" | "formacion">("resumen");
+  const [activeTab, setActiveTab] = useState<
+    "resumen" | "trabajador" | "pensionista" | "formacion"
+  >("resumen");
 
   // Radio button category selection inside Resumen de Prestadores
   const [categoria, setCategoria] = useState<CategoriaType>("TRABAJADOR");
@@ -93,7 +180,9 @@ export function useTRegistroForm() {
   const [email, setEmail] = useState("");
 
   // Success data state
-  const [successData, setSuccessData] = useState<TRegistroSuccessData | null>(null);
+  const [successData, setSuccessData] = useState<TRegistroSuccessData | null>(
+    null,
+  );
 
   // Sync phone and email when selectedPersona changes
   useEffect(() => {
@@ -248,7 +337,13 @@ export function useTRegistroForm() {
   // Create persona mutation
   const { mutate: createPersona, isPending: isCreating } = useMutation({
     mutationFn: async (formData: PersonaFormType) => {
-      const res = await Api.post("/persona", formData, {
+      const { direccion: { personaId, ...direccionRest }, ...personaRest } = formData;
+      const payload = {
+        ...personaRest,
+        direccion: direccionRest,
+      };
+
+      const res = await Api.post("/persona", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -265,15 +360,107 @@ export function useTRegistroForm() {
     },
   });
 
-
   const onSubmitRegister = (formData: PersonaFormType) => {
     createPersona(formData);
   };
 
   // Create TPersona mutation
-  const { mutate: createTPersona, isPending: isCreatingTPersona } = useMutation({
-    mutationFn: async (tPersonaData: CreateTPersonaInput) => {
-      const res = await Api.post("/t-persona", tPersonaData, {
+  const { mutate: createTPersona, isPending: isCreatingTPersona } = useMutation(
+    {
+      mutationFn: async (tPersonaData: CreateTPersonaInput) => {
+        const res = await Api.post("/t-persona", tPersonaData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return res.data;
+      },
+      onSuccess: (data, variables) => {
+        toast.success("T-Registro guardado con éxito");
+        if (selectedPersona && activeCompany) {
+          const formValues = methods.getValues() as ExtendedFormValues;
+          const principalAddress =
+            selectedPersona.direcciones &&
+            selectedPersona.direcciones.length > 0
+              ? formatDireccion(selectedPersona.direcciones[0])
+              : "No registrada";
+
+          setSuccessData({
+            tPersonaId: data?.body?.tPersonaId,
+            createAt: data?.body?.createAt,
+            empleador: {
+              ruc: activeCompany.ruc,
+              name: activeCompany.name,
+              direccion: activeCompany.address,
+            },
+            trabajador: {
+              dni: selectedPersona.dni,
+              nombres: selectedPersona.nombres,
+              apellidoPaterno: selectedPersona.apellidoPaterno,
+              apellidoMaterno: selectedPersona.apellidoMaterno,
+              fechaNacimiento: selectedPersona.fechaNacimiento,
+              sexo: selectedPersona.sexo,
+              estadoCivil: selectedPersona.estadoCivil,
+              nacionalidad: selectedPersona.nacionalidad,
+              telefono: variables.telefono || "",
+              email: variables.email || "",
+              direccion: principalAddress,
+            },
+            laborales: {
+              fechaInicio: variables.fechaInicio || "",
+              tipoTrabajador: variables.tipoTrabajador || "EMPLEADO",
+              regimenLaboral: variables.regimenLaboral || "D_LEG_728",
+              ocupacion:
+                formValues.ocupacionNombre || "OCUPACION NO ESPECIFICADA",
+              tipoContrato: variables.tipoContrato || "PLAZO_INDETERMINADO",
+              tipoPago: variables.tipoPago || "EFECTIVO",
+              periodoIngreso: variables.periodoIngreso || "MENSUAL",
+              montoRemuneracion: variables.montoRemuneracionInicial || 0,
+              codlocal: variables.codlocal || "0000",
+              discapacidad: variables.discapacidad || false,
+              sindicalizado: variables.sindicalizado || false,
+              jornadaLaboral: variables.jornadaLaboral || "MAXIMA",
+              situacionEspecial: variables.situacionEspecial || "NINGUNA",
+            },
+            seguridadSocial: {
+              regimenSalud: variables.regimenSalud || "ESSALUD_REGULAR",
+              fechaInicioSalud: variables.fechaInicioSalud || "",
+              fechaFinSalud: variables.fechaFinSalud,
+              regimenPensionario:
+                variables.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
+              fechaInicioPensionario: variables.fechaInicioPensionario || "",
+              fechaFinPensionario: variables.fechaFinPensionario,
+              CUSPP: variables.CUSPP,
+              sctr: variables.sctr || false,
+              pension: variables.pension,
+              salud: variables.salud,
+              fechaInicioSaludPension: variables.fechaInicioSaludPension,
+              fechaFinSaludPension: variables.fechaFinSaludPension,
+            },
+            educacion: {
+              situacionEducativa:
+                formValues.situacionEducativaNombre || "SIN ESTUDIOS",
+              estudios: variables.estudios || [],
+            },
+            adicionales: {
+              quintaCategoriaExonerada:
+                variables.quintaCategoriaExonerada || false,
+              evitaDobleImposicion: variables.evitaDobleImposicion || false,
+            },
+            categoria: categoria,
+          });
+        }
+      },
+      onError: () => {
+        toast.error("Error al guardar el T-Registro");
+      },
+    },
+  );
+
+  // Update TPersona mutation
+  const { mutate: updateTPersona, isPending: isUpdatingTPersona } = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: CreateTPersonaInput }) => {
+      const res = await Api.patch(`/t-persona/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -281,21 +468,10 @@ export function useTRegistroForm() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("T-Registro guardado con éxito");
-      if (selectedPersona) {
-        setSuccessData({
-          dni: selectedPersona.dni,
-          nombres: selectedPersona.nombres,
-          apellidoPaterno: selectedPersona.apellidoPaterno,
-          apellidoMaterno: selectedPersona.apellidoMaterno,
-          fechaNacimiento: selectedPersona.fechaNacimiento,
-          nacionalidad: selectedPersona.nacionalidad,
-          categoria: categoria,
-        });
-      }
+      toast.success("T-Registro actualizado con éxito");
     },
     onError: () => {
-      toast.error("Error al guardar el T-Registro");
+      toast.error("Error al actualizar el T-Registro");
     },
   });
 
@@ -325,6 +501,8 @@ export function useTRegistroForm() {
     isBlocking,
     createTPersona,
     isCreatingTPersona,
+    updateTPersona,
+    isUpdatingTPersona,
     companyId,
     telefono,
     setTelefono,

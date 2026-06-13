@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 const TRegistroCrearPage = dynamic(
   () => import("@/modules/dashboard/pages/TRegistroCrearPage").then((mod) => mod.TRegistroCrearPage),
@@ -8,5 +9,9 @@ const TRegistroCrearPage = dynamic(
 );
 
 export default function Page() {
-  return <TRegistroCrearPage />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-400">Cargando formulario...</div>}>
+      <TRegistroCrearPage />
+    </Suspense>
+  );
 }

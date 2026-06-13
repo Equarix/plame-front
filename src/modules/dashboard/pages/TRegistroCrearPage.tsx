@@ -3,17 +3,16 @@
 import React from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { FormProvider } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { Api } from "@/lib/api";
 import {
   FiPlus,
   FiSearch,
   FiX,
   FiUser,
   FiMapPin,
-  FiPhone,
-  FiMail,
   FiLock,
-  FiCheck,
 } from "react-icons/fi";
 import { toast } from "sonner";
 
@@ -24,8 +23,7 @@ import { FormSelect } from "@/components/forms/FormSelect";
 import { DireccionModal } from "../../persona/components/DireccionModal";
 import { AddAddressModal } from "../../persona/components/AddAddressModal";
 import { PersonaSummaryCard } from "../../persona/components/PersonaSummaryCard";
-import { formatDireccion } from "@/utils/address";
-import { useTRegistroForm, CategoriaType, type EstudiosInput } from "../hooks/useTRegistroForm";
+import { useTRegistroForm, type CategoriaType, type EstudiosInput } from "../hooks/useTRegistroForm";
 import { Tabs, TabHeader, TabHeaderButton, TabBody, Tab } from "@/components/Tabs/Tabs";
 import { ResumenTab } from "../components/ResumenTab";
 import { TrabajadorTab } from "../components/TrabajadorTab";
@@ -37,13 +35,16 @@ const getDireccionSummary = (dir: DireccionFormType): string => {
   const parts = [
     dir.tipoVia && dir.nombreVia ? `${dir.tipoVia} ${dir.nombreVia}` : null,
     dir.numero ? `N° ${dir.numero}` : null,
-    dir.tipoZona && dir.nombreZona ? `${dir.tipoZona} ${dir.nombreZona}` : null,
+    dir.tipoZona ? `${dir.tipoZona} ${dir.nombreZona}` : null,
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : "Dirección registrada";
 };
 
 export function TRegistroCrearPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const { token } = useAuth();
 
   const {
     selectedPersona,
@@ -68,6 +69,8 @@ export function TRegistroCrearPage() {
     isBlocking,
     createTPersona,
     isCreatingTPersona,
+    updateTPersona,
+    isUpdatingTPersona,
     companyId,
     telefono,
     setTelefono,
@@ -99,9 +102,118 @@ export function TRegistroCrearPage() {
   // Estudios del trabajador — state elevado a nivel de página
   const [estudios, setEstudios] = React.useState<EstudiosInput[]>([]);
 
+  // Fetch details of T-Persona in edit mode
+  const { data: tPersonaDetails, isLoading: isLoadingDetails } = useQuery<any>({
+    queryKey: ["t-persona-details", editId, token],
+    queryFn: async () => {
+      if (!editId) return null;
+      const res = await Api.get(`/t-persona/details/${editId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!editId && !!token,
+  });
+
+  // Skip search modal and go directly to register phase if editing
+  React.useEffect(() => {
+    if (editId) {
+      setIsModalOpen(false);
+      setFormPhase("register");
+    }
+  }, [editId, setIsModalOpen, setFormPhase]);
+
+  // Pre-populate form values once worker details are retrieved
+  React.useEffect(() => {
+    if (tPersonaDetails) {
+      setSelectedPersona(tPersonaDetails.persona);
+      setTelefono(tPersonaDetails.telefono || "");
+      setEmail(tPersonaDetails.email || "");
+      setCategoria(tPersonaDetails.categoria);
+
+      if (tPersonaDetails.estudios) {
+        setEstudios(tPersonaDetails.estudios);
+      }
+
+      const formatDate = (isoStr?: string) => {
+        if (!isoStr) return "";
+        return isoStr.split("T")[0];
+      };
+
+      const formattedValues = {
+        dni: tPersonaDetails.persona.dni,
+        nombres: tPersonaDetails.persona.nombres,
+        apellidoPaterno: tPersonaDetails.persona.apellidoPaterno,
+        apellidoMaterno: tPersonaDetails.persona.apellidoMaterno,
+        fechaNacimiento: formatDate(tPersonaDetails.persona.fechaNacimiento),
+        sexo: tPersonaDetails.persona.sexo,
+        estadoCivil: tPersonaDetails.persona.estadoCivil,
+        nacionalidad: tPersonaDetails.persona.nacionalidad,
+        direccion: tPersonaDetails.persona.direcciones && tPersonaDetails.persona.direcciones.length > 0
+          ? tPersonaDetails.persona.direcciones[0]
+          : {
+              personaId: 0,
+              departamentoId: 0,
+              provinciaId: 0,
+              distritoId: 0,
+              tipoVia: "AVENIDA",
+              nombreVia: "",
+              numero: "",
+              tipoZona: "URBANA",
+              nombreZona: "",
+            },
+
+        fechaInicio: formatDate(tPersonaDetails.fechaInicio),
+        fechaFin: formatDate(tPersonaDetails.periodoFin),
+        motivoBaja: tPersonaDetails.motivoBaja || "",
+        tipoTrabajador: tPersonaDetails.tipoTrabajador || "EMPLEADO",
+        fechaInicioTipo: formatDate(tPersonaDetails.fechaIngreso),
+        regimenLaboral: tPersonaDetails.regimenLaboral || "D_LEG_728",
+        rdb_descripcion_detalle: tPersonaDetails.otroRegimenLaboral || "",
+        categoriaOcupacional: "EMPLEADO",
+        ocupacionId: tPersonaDetails.ocupacionId || "",
+        ocupacionNombre: tPersonaDetails.ocupacion?.name || "",
+        tipoContrato: tPersonaDetails.tipoContrato || "PLAZO_INDETERMINADO",
+        tipoPago: tPersonaDetails.tipoPago || "EFECTIVO",
+        periodoIngreso: tPersonaDetails.periodoIngreso || "MENSUAL",
+        montoRemuneracion: tPersonaDetails.montoRemuneracionInicial || 1025,
+        establecimiento: tPersonaDetails.tEmpresaCompanyId,
+        codLocal: tPersonaDetails.codlocal || "0000",
+        localTipo: "DOMICILIO FISCAL",
+        jornadaLaboral: tPersonaDetails.jornadaLaboral || "MAXIMA",
+        situacionEspecial: tPersonaDetails.situacionEspecial || "NINGUNA",
+        discapacidad: tPersonaDetails.discapacidad ? "SI" : "NO",
+        sindicalizado: tPersonaDetails.sindicalizado ? "SI" : "NO",
+        situacion: "Activo",
+
+        regimenSalud: tPersonaDetails.regimenSalud || "ESSALUD_REGULAR",
+        fechaInicioSalud: formatDate(tPersonaDetails.fechaInicioSalud),
+        fechaFinSalud: formatDate(tPersonaDetails.fechaFinSalud),
+        regimenPensionario: tPersonaDetails.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
+        fechaInicioPensionario: formatDate(tPersonaDetails.fechaInicioPensionario),
+        fechaFinPensionario: formatDate(tPersonaDetails.fechaFinPensionario),
+        CUSPP: tPersonaDetails.CUSPP || "",
+        sctr: tPersonaDetails.sctr ? "SI" : "NO",
+        pension: tPersonaDetails.pension || "ONP",
+        salud: tPersonaDetails.salud || "ESSALUD",
+        fechaInicioSaludPension: formatDate(tPersonaDetails.fechaInicioSaludPension),
+        fechaFinSaludPension: formatDate(tPersonaDetails.fechaFinSaludPension),
+
+        situacionEducativaId: tPersonaDetails.situacionEducativaId || 1,
+        situacionEducativaNombre: tPersonaDetails.situacionEducativa?.nombre || "",
+        quintaCategoriaExonerada: tPersonaDetails.quintaCategoriaExonerada ? "SI" : "NO",
+        evitaDobleImposicion: tPersonaDetails.evitaDobleImposicion ? "SI" : "NO",
+      };
+
+      methods.reset(formattedValues as any);
+      methods.setValue("ocupacionNombre" as keyof PersonaFormType, tPersonaDetails.ocupacion?.name || "");
+      methods.setValue("situacionEducativaNombre" as keyof PersonaFormType, tPersonaDetails.situacionEducativa?.nombre || "");
+    }
+  }, [tPersonaDetails, methods, setSelectedPersona, setTelefono, setEmail, setCategoria]);
+
   if (successData) {
     return (
-      <DashboardLayout title="Registrar T-Registro" icon={<FiPlus className="text-sm" />}>
+      <DashboardLayout title={editId ? "Editar T-Registro" : "Registrar T-Registro"} icon={<FiPlus className="text-sm" />}>
         <TRegistroSuccessScreen
           data={successData}
           onRetornar={() => {
@@ -109,6 +221,16 @@ export function TRegistroCrearPage() {
             router.push("/t-registro");
           }}
         />
+      </DashboardLayout>
+    );
+  }
+
+  if (editId && isLoadingDetails) {
+    return (
+      <DashboardLayout title="Editar T-Registro" icon={<FiPlus className="text-sm" />}>
+        <div className="p-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
+          Cargando detalles del trabajador...
+        </div>
       </DashboardLayout>
     );
   }
@@ -174,24 +296,21 @@ export function TRegistroCrearPage() {
 
     const isSctrActive = formValues.sctr === "SI";
 
-    // Call the create mutation.
-    createTPersona({
+    const payload = {
       personaId: selectedPersona.personaId,
       categoria: categoria,
       tEmpresaCompanyId: companyId,
-      // Dynamic form values if provided, falling back to valid defaults
-      periodoInicio: new Date().toISOString(),
+      periodoInicio: editId ? tPersonaDetails?.periodoInicio : new Date().toISOString(),
       fechaInicio: formValues.fechaInicio ? new Date(formValues.fechaInicio).toISOString() : new Date().toISOString(),
       tipoTrabajador: formValues.tipoTrabajador || "EMPLEADO",
-      fechaIngreso: new Date().toISOString(),
+      fechaIngreso: editId ? tPersonaDetails?.fechaIngreso : new Date().toISOString(),
       regimenLaboral: formValues.regimenLaboral || "D_LEG_728",
-      ocupacionId: activeOcupacionId || 1, // Dynamically selected or fallback
+      ocupacionId: activeOcupacionId || 1,
       tipoContrato: formValues.tipoContrato || "PLAZO_INDETERMINADO",
       tipoPago: formValues.tipoPago || "EFECTIVO",
-      entidadId: formValues.entidadId ? Number(formValues.entidadId) : 1, // Default seed ID
+      entidadId: formValues.entidadId ? Number(formValues.entidadId) : 1,
       montoRemuneracionInicial: formValues.montoRemuneracion ? Number(formValues.montoRemuneracion) : 1025,
-      
-      // Social Security fields
+
       regimenSalud: formValues.regimenSalud || "ESSALUD_REGULAR",
       fechaInicioSalud: formValues.fechaInicioSalud ? new Date(formValues.fechaInicioSalud).toISOString() : new Date().toISOString(),
       fechaFinSalud: formValues.fechaFinSalud ? new Date(formValues.fechaFinSalud).toISOString() : undefined,
@@ -217,7 +336,20 @@ export function TRegistroCrearPage() {
       situacionEspecial: formValues.situacionEspecial || "NINGUNA",
       discapacidad: formValues.discapacidad === "SI",
       sindicalizado: formValues.sindicalizado === "SI",
-    });
+    };
+
+    if (editId) {
+      updateTPersona(
+        { id: Number(editId), data: payload },
+        {
+          onSuccess: () => {
+            router.push("/t-registro");
+          },
+        }
+      );
+    } else {
+      createTPersona(payload);
+    }
   };
 
   const categoriesList: { value: CategoriaType; label: string; desc: string }[] = [
@@ -244,14 +376,14 @@ export function TRegistroCrearPage() {
   ];
 
   return (
-    <DashboardLayout title="Registrar T-Registro" icon={<FiPlus className="text-sm" />}>
+    <DashboardLayout title={editId ? "Editar T-Registro" : "Registrar T-Registro"} icon={<FiPlus className="text-sm" />}>
       <div className="flex flex-col gap-6">
 
         {/* Datos de Identificación (Siempre visible si está seleccionada) */}
         {selectedPersona ? (
           <PersonaSummaryCard
             persona={selectedPersona}
-            onCambiarPersona={handleOpenSearch}
+            onCambiarPersona={editId ? undefined : handleOpenSearch} // Disable changing persona in edit mode
             telefono={telefono}
             onChangeTelefono={setTelefono}
             email={email}
@@ -349,17 +481,17 @@ export function TRegistroCrearPage() {
               <button
                 type="button"
                 onClick={() => router.push("/t-registro")}
-                className="px-4.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-bold text-zinc-600 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
+                className="px-4.5 py-2 border border-zinc-200 dark:border-zinc-800 rounded-bento-control text-xs font-bold text-zinc-650 dark:text-zinc-450 hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors cursor-pointer"
               >
                 Retornar
               </button>
               <button
                 type="button"
                 onClick={handleGrabar}
-                disabled={isCreatingTPersona}
+                disabled={isCreatingTPersona || isUpdatingTPersona}
                 className="px-5 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-extrabold shadow-md transition-all cursor-pointer border border-zinc-900/10 flex items-center gap-1.5"
               >
-                {isCreatingTPersona ? "Grabando..." : "Grabar"}
+                {isCreatingTPersona || isUpdatingTPersona ? "Grabando..." : "Grabar"}
               </button>
             </div>
           </div>

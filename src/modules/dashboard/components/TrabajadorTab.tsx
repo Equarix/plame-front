@@ -29,7 +29,7 @@ interface TrabajadorTabProps {
 }
 
 export function TrabajadorTab({ estudios, onEstudiosChange }: TrabajadorTabProps) {
-  const { register, formState: { errors }, control, setValue } = useFormContext();
+  const { register, formState: { errors }, control, setValue, getValues } = useFormContext();
   const watchTipoPago = useWatch({ control, name: "tipoPago" });
   const watchRegimenPensionario = useWatch({ control, name: "regimenPensionario" });
   const watchSctr = useWatch({ control, name: "sctr" });
@@ -55,6 +55,11 @@ export function TrabajadorTab({ estudios, onEstudiosChange }: TrabajadorTabProps
 
   // Auto-populate establishment details and social security defaults on mount / activeCompany change
   useEffect(() => {
+    // Skip setting default values if the form has already been initialized (like in Edit mode)
+    if (getValues("fechaInicio")) {
+      return;
+    }
+
     if (activeCompany) {
       setValue("establecimiento", activeCompany.companyId);
     }
