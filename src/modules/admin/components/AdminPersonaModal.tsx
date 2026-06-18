@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { personaSchema, type PersonaFormType, type DireccionFormType } from "../schemas/persona.schema";
+import {
+  personaSchema,
+  type PersonaFormType,
+  type DireccionFormType,
+} from "../schemas/persona.schema";
 import { FormInput } from "@/components/forms/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect";
 import type { PersonaData } from "@/interface/response.interface";
@@ -49,7 +53,6 @@ export function AdminPersonaModal({
       estadoCivil: "",
       nacionalidad: "",
       direccion: {
-        personaId: 0,
         departamentoId: 0,
         provinciaId: 0,
         distritoId: 0,
@@ -71,10 +74,10 @@ export function AdminPersonaModal({
   });
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    control,
     watch,
   } = methods;
 
@@ -101,9 +104,10 @@ export function AdminPersonaModal({
           }
         }
 
-        const dir = personaToEdit.direcciones && personaToEdit.direcciones.length > 0
-          ? personaToEdit.direcciones[0]
-          : null;
+        const dir =
+          personaToEdit.direcciones && personaToEdit.direcciones.length > 0
+            ? personaToEdit.direcciones[0]
+            : null;
 
         reset({
           dni: personaToEdit.dni,
@@ -114,43 +118,43 @@ export function AdminPersonaModal({
           sexo: personaToEdit.sexo,
           estadoCivil: personaToEdit.estadoCivil,
           nacionalidad: personaToEdit.nacionalidad,
-          direccion: dir ? {
-            personaId: dir.personaId,
-            departamentoId: dir.departamentoId,
-            provinciaId: dir.provinciaId,
-            distritoId: dir.distritoId,
-            tipoVia: dir.tipoVia,
-            nombreVia: dir.nombreVia,
-            numero: dir.numero,
-            dpto: dir.dpto || "",
-            interior: dir.interior || "",
-            manzana: dir.manzana || "",
-            lote: dir.lote || "",
-            block: dir.block || "",
-            etapa: dir.etapa || "",
-            tipoZona: dir.tipoZona,
-            nombreZona: dir.nombreZona,
-            referencia: dir.referencia || "",
-            refiereEssalud: dir.refiereEssalud,
-          } : {
-            personaId: 0,
-            departamentoId: 0,
-            provinciaId: 0,
-            distritoId: 0,
-            tipoVia: "AVENIDA",
-            nombreVia: "",
-            numero: "",
-            dpto: "",
-            interior: "",
-            manzana: "",
-            lote: "",
-            block: "",
-            etapa: "",
-            tipoZona: "URBANA",
-            nombreZona: "",
-            referencia: "",
-            refiereEssalud: false,
-          },
+          direccion: dir
+            ? {
+                departamentoId: dir.departamentoId,
+                provinciaId: dir.provinciaId,
+                distritoId: dir.distritoId,
+                tipoVia: dir.tipoVia,
+                nombreVia: dir.nombreVia,
+                numero: dir.numero,
+                dpto: dir.dpto || "",
+                interior: dir.interior || "",
+                manzana: dir.manzana || "",
+                lote: dir.lote || "",
+                block: dir.block || "",
+                etapa: dir.etapa || "",
+                tipoZona: dir.tipoZona,
+                nombreZona: dir.nombreZona,
+                referencia: dir.referencia || "",
+                refiereEssalud: dir.refiereEssalud,
+              }
+            : {
+                departamentoId: 0,
+                provinciaId: 0,
+                distritoId: 0,
+                tipoVia: "AVENIDA",
+                nombreVia: "",
+                numero: "",
+                dpto: "",
+                interior: "",
+                manzana: "",
+                lote: "",
+                block: "",
+                etapa: "",
+                tipoZona: "URBANA",
+                nombreZona: "",
+                referencia: "",
+                refiereEssalud: false,
+              },
         });
       } else {
         reset({
@@ -163,7 +167,6 @@ export function AdminPersonaModal({
           estadoCivil: "",
           nacionalidad: "",
           direccion: {
-            personaId: 0,
             departamentoId: 0,
             provinciaId: 0,
             distritoId: 0,
@@ -202,7 +205,11 @@ export function AdminPersonaModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiPlusCircle className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiPlusCircle className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
               {isEditing ? "Editar Persona" : "Registrar Nueva Persona"}
@@ -218,86 +225,129 @@ export function AdminPersonaModal({
 
         {/* Form Body - Scrollable */}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto pr-1.5 space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex-1 overflow-y-auto pr-1.5 space-y-5"
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormInput
-                label="Documento de Identidad (DNI)"
+              <Controller
                 name="dni"
-                placeholder="e.g. 70123456"
-                disabled={isLoading || isEditing}
-                register={register("dni")}
-                error={errors.dni?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Documento de Identidad (DNI)"
+                    placeholder="e.g. 70123456"
+                    disabled={isLoading || isEditing}
+                    error={errors.dni?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormInput
-                label="Nombres"
+              <Controller
                 name="nombres"
-                placeholder="e.g. Juan Carlos"
-                disabled={isLoading}
-                register={register("nombres")}
-                error={errors.nombres?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Nombres"
+                    placeholder="e.g. Juan Carlos"
+                    disabled={isLoading}
+                    error={errors.nombres?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormInput
-                label="Apellido Paterno"
+              <Controller
                 name="apellidoPaterno"
-                placeholder="e.g. Pérez"
-                disabled={isLoading}
-                register={register("apellidoPaterno")}
-                error={errors.apellidoPaterno?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Apellido Paterno"
+                    placeholder="e.g. Pérez"
+                    disabled={isLoading}
+                    error={errors.apellidoPaterno?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormInput
-                label="Apellido Materno"
+              <Controller
                 name="apellidoMaterno"
-                placeholder="e.g. Quispe"
-                disabled={isLoading}
-                register={register("apellidoMaterno")}
-                error={errors.apellidoMaterno?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Apellido Materno"
+                    placeholder="e.g. Quispe"
+                    disabled={isLoading}
+                    error={errors.apellidoMaterno?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormInput
-                label="Fecha de Nacimiento"
+              <Controller
                 name="fechaNacimiento"
-                type="date"
-                disabled={isLoading}
-                register={register("fechaNacimiento")}
-                error={errors.fechaNacimiento?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Fecha de Nacimiento"
+                    type="date"
+                    disabled={isLoading}
+                    error={errors.fechaNacimiento?.message}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormSelect
-                label="Sexo"
+              <Controller
                 name="sexo"
-                disabled={isLoading}
-                register={register("sexo")}
-                error={errors.sexo?.message}
-                options={[
-                  { value: "MASCULINO", label: "MASCULINO" },
-                  { value: "FEMENINO", label: "FEMENINO" },
-                ]}
+                control={control}
+                render={({ field }) => (
+                  <FormSelect
+                    label="Sexo"
+                    disabled={isLoading}
+                    error={errors.sexo?.message}
+                    options={[
+                      { value: "MASCULINO", label: "MASCULINO" },
+                      { value: "FEMENINO", label: "FEMENINO" },
+                    ]}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormSelect
-                label="Estado Civil"
+              <Controller
                 name="estadoCivil"
-                disabled={isLoading}
-                register={register("estadoCivil")}
-                error={errors.estadoCivil?.message}
-                options={[
-                  { value: "SOLTERO", label: "SOLTERO(A)" },
-                  { value: "CASADO", label: "CASADO(A)" },
-                  { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
-                  { value: "VIUDO", label: "VIUDO(A)" },
-                ]}
+                control={control}
+                render={({ field }) => (
+                  <FormSelect
+                    label="Estado Civil"
+                    disabled={isLoading}
+                    error={errors.estadoCivil?.message}
+                    options={[
+                      { value: "SOLTERO", label: "SOLTERO(A)" },
+                      { value: "CASADO", label: "CASADO(A)" },
+                      { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
+                      { value: "VIUDO", label: "VIUDO(A)" },
+                    ]}
+                    {...field}
+                  />
+                )}
               />
 
-              <FormInput
-                label="Nacionalidad"
+              <Controller
                 name="nacionalidad"
-                placeholder="e.g. PERUANA"
-                disabled={isLoading}
-                register={register("nacionalidad")}
-                error={errors.nacionalidad?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormInput
+                    label="Nacionalidad"
+                    placeholder="e.g. PERUANA"
+                    disabled={isLoading}
+                    error={errors.nacionalidad?.message}
+                    {...field}
+                  />
+                )}
               />
             </div>
 
@@ -312,7 +362,9 @@ export function AdminPersonaModal({
                   className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 border border-zinc-200 dark:border-zinc-700 rounded-bento-control text-xs font-bold text-zinc-850 dark:text-zinc-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm w-full sm:w-auto"
                 >
                   <FiMapPin className="text-sm text-zinc-500" />
-                  {hasDireccionFilled ? "Editar Dirección" : "Registrar Dirección"}
+                  {hasDireccionFilled
+                    ? "Editar Dirección"
+                    : "Registrar Dirección"}
                 </button>
                 {hasDireccionFilled && watchDireccion && (
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold truncate max-w-[320px]">
@@ -348,7 +400,11 @@ export function AdminPersonaModal({
                 disabled={isLoading}
                 className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
               >
-                {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Persona"}
+                {isLoading
+                  ? "Procesando..."
+                  : isEditing
+                    ? "Guardar Cambios"
+                    : "Crear Persona"}
               </button>
             </div>
           </form>

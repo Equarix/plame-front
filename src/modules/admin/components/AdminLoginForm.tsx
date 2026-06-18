@@ -34,23 +34,21 @@ export function AdminLoginForm() {
       {/* Username Field */}
       <FormInput
         label="Usuario Administrador"
-        name="username"
         placeholder="Introduce tu usuario administrador"
         disabled={isLoadLoginAdmin}
         icon={FaUser}
-        register={register("username")}
+        {...register("username")}
         error={errors.username?.message}
       />
 
       {/* Password Field */}
       <FormInput
         label="Contraseña de Administrador"
-        name="password"
         type={showPassword ? "text" : "password"}
         placeholder="••••••••"
         disabled={isLoadLoginAdmin}
         icon={FaLock}
-        register={register("password")}
+        {...register("password")}
         error={errors.password?.message}
         rightElement={
           <button

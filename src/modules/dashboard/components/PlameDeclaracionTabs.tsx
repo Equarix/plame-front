@@ -103,22 +103,87 @@ export function PlameDeclaracionTabs({
       // ── INGRESOS MERGE ──
       const dbIngresos = selectedDetalle.ingresos || [];
       const defaultIngresos = [
-        { code: "0105", name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)", devengado: 0, pagado: 0 },
-        { code: "0106", name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)", devengado: 0, pagado: 0 },
-        { code: "0107", name: "TRABAJO EN FERIADO O DÍA DESCANSO", devengado: 0, pagado: 0 },
-        { code: "0118", name: "REMUNERACIÓN VACACIONAL", devengado: 0, pagado: 0 },
-        { code: "0121", name: "REMUNERACIÓN O JORNAL BÁSICO", devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0, pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0 },
-        { code: "0122", name: "REMUNERACIÓN PERMANENTE", devengado: 0, pagado: 0 },
+        {
+          code: "0105",
+          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0106",
+          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0107",
+          name: "TRABAJO EN FERIADO O DÍA DESCANSO",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0118",
+          name: "REMUNERACIÓN VACACIONAL",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0121",
+          name: "REMUNERACIÓN O JORNAL BÁSICO",
+          devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+          pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+        },
+        {
+          code: "0122",
+          name: "REMUNERACIÓN PERMANENTE",
+          devengado: 0,
+          pagado: 0,
+        },
         { code: "0201", name: "ASIGNACIÓN FAMILIAR", devengado: 0, pagado: 0 },
-        { code: "0306", name: "BONIFICACIONES REGULARES", devengado: 0, pagado: 0 },
-        { code: "0311", name: "BONIFICACION UNIFICADA DE CONSTRUCC", devengado: 0, pagado: 0 },
-        { code: "0406", name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334", devengado: 0, pagado: 0 },
-        { code: "0407", name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334", devengado: 0, pagado: 0 },
-        { code: "0504", name: "INDEMNIZACIÓN VACACIONES NO GOZADAS", devengado: 0, pagado: 0 },
-        { code: "0904", name: "COMPENSACIÓN TIEMPO DE SERVICIOS", devengado: 0, pagado: 0 },
+        {
+          code: "0306",
+          name: "BONIFICACIONES REGULARES",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0311",
+          name: "BONIFICACION UNIFICADA DE CONSTRUCC",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0406",
+          name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0407",
+          name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0504",
+          name: "INDEMNIZACIÓN VACACIONES NO GOZADAS",
+          devengado: 0,
+          pagado: 0,
+        },
+        {
+          code: "0904",
+          name: "COMPENSACIÓN TIEMPO DE SERVICIOS",
+          devengado: 0,
+          pagado: 0,
+        },
       ];
-      const mergedIngresos = defaultIngresos.map(def => dbIngresos.find(i => i.code === def.code) || def);
-      dbIngresos.forEach(dbI => { if (!mergedIngresos.some(m => m.code === dbI.code)) mergedIngresos.push(dbI); });
+      const mergedIngresos = defaultIngresos.map(
+        (def) => dbIngresos.find((i) => i.code === def.code) || def,
+      );
+      dbIngresos.forEach((dbI) => {
+        if (!mergedIngresos.some((m) => m.code === dbI.code))
+          mergedIngresos.push(dbI);
+      });
       setIngresos(mergedIngresos);
 
       // ── DESCUENTOS MERGE ──
@@ -130,27 +195,61 @@ export function PlameDeclaracionTabs({
         { code: "0704", name: "DESCUENTO POR INASISTENCIAS", monto: 0 },
         { code: "0706", name: "OTROS DESC NO DEDUC DE BASE IMPONIB", monto: 0 },
       ];
-      const mergedDescuentos = defaultDescuentos.map(def => dbDescuentos.find(d => d.code === def.code) || def);
-      dbDescuentos.forEach(dbD => { if (!mergedDescuentos.some(m => m.code === dbD.code)) mergedDescuentos.push(dbD); });
+      const mergedDescuentos = defaultDescuentos.map(
+        (def) => dbDescuentos.find((d) => d.code === def.code) || def,
+      );
+      dbDescuentos.forEach((dbD) => {
+        if (!mergedDescuentos.some((m) => m.code === dbD.code))
+          mergedDescuentos.push(dbD);
+      });
       setDescuentos(mergedDescuentos);
 
       // ── APORTACIONES TRABAJADOR MERGE ──
       const dbTributos = selectedDetalle.tributos || [];
-      const dbAportacionesTrab = dbTributos.filter(t => t.code.startsWith("06"));
+      const dbAportacionesTrab = dbTributos.filter((t) =>
+        t.code.startsWith("06"),
+      );
       const sumDevengado = mergedIngresos.reduce((s, i) => s + i.devengado, 0);
       const defaultAportacionesTrab = [
         { code: "0602", name: "CONAFOVICER", base: 0, monto: 0 },
-        { code: "0605", name: "RENTA QUINTA CATEGORÍA RETENCIONES", base: sumDevengado, monto: 0 },
-        { code: "0607", name: "SISTEMA NAC. DE PENSIONES DL 19990", base: sumDevengado, monto: 0 },
-        { code: "0611", name: "OTROS APORTACIONES TRAB./PENSIONIS.", base: 0, monto: 0 },
+        {
+          code: "0605",
+          name: "RENTA QUINTA CATEGORÍA RETENCIONES",
+          base: sumDevengado,
+          monto: 0,
+        },
+        {
+          code: "0607",
+          name: "SISTEMA NAC. DE PENSIONES DL 19990",
+          base: sumDevengado,
+          monto: 0,
+        },
+        {
+          code: "0611",
+          name: "OTROS APORTACIONES TRAB./PENSIONIS.",
+          base: 0,
+          monto: 0,
+        },
       ];
-      const mergedAportacionesTrab = defaultAportacionesTrab.map(def => {
-        const found = dbAportacionesTrab.find(a => a.code === def.code);
-        return found ? { code: found.code, name: found.name, base: found.base, monto: found.monto } : def;
+      const mergedAportacionesTrab = defaultAportacionesTrab.map((def) => {
+        const found = dbAportacionesTrab.find((a) => a.code === def.code);
+        return found
+          ? {
+              code: found.code,
+              name: found.name,
+              base: found.base,
+              monto: found.monto,
+            }
+          : def;
       });
-      dbAportacionesTrab.forEach(dbA => {
-        if (!mergedAportacionesTrab.some(m => m.code === dbA.code)) {
-          mergedAportacionesTrab.push({ code: dbA.code, name: dbA.name, base: dbA.base, monto: dbA.monto });
+      dbAportacionesTrab.forEach((dbA) => {
+        if (!mergedAportacionesTrab.some((m) => m.code === dbA.code)) {
+          mergedAportacionesTrab.push({
+            code: dbA.code,
+            name: dbA.name,
+            base: dbA.base,
+            monto: dbA.monto,
+          });
         }
       });
       setAportacionesTrabajador(mergedAportacionesTrab);
@@ -262,8 +361,6 @@ export function PlameDeclaracionTabs({
     );
   };
 
-
-
   // Sub-totals calculations
   const totalIngresosDevengado = ingresos.reduce(
     (sum, item) => sum + item.devengado,
@@ -300,11 +397,9 @@ export function PlameDeclaracionTabs({
   const handleSaveDeuda = async (deudaData: any) => {
     setIsProcessingGlobal(true);
     try {
-      await Api.patch(
-        `/plame/${declaracion.plameDeclaracionId}`,
-        deudaData,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      await Api.patch(`/plame/${declaracion.plameDeclaracionId}`, deudaData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success("Determinación de la deuda guardada correctamente");
       onRefresh();
     } catch (err) {
@@ -317,12 +412,12 @@ export function PlameDeclaracionTabs({
   const handleFinalizeDeclaration = async (deudaData?: any) => {
     setIsProcessingGlobal(true);
     try {
-      const payload = deudaData ? { estado: "Presentado", ...deudaData } : { estado: "Presentado" };
-      await Api.patch(
-        `/plame/${declaracion.plameDeclaracionId}`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const payload = deudaData
+        ? { estado: "Presentado", ...deudaData }
+        : { estado: "Presentado" };
+      await Api.patch(`/plame/${declaracion.plameDeclaracionId}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success("Declaración Jurada finalizada y presentada");
       onClose();
     } catch (err) {
@@ -717,16 +812,14 @@ export function PlameDeclaracionTabs({
                         <div className="grid grid-cols-3 gap-4 items-end">
                           <FormInput
                             label="Laborados"
-                            name="diasLaborados"
                             type="number"
-                            register={registerDetalle("diasLaborados")}
+                            {...registerDetalle("diasLaborados")}
                           />
                           <div className="relative">
                             <FormInput
                               label="Subsidiados"
-                              name="diasSubsidiados"
                               type="number"
-                              register={registerDetalle("diasSubsidiados")}
+                              {...registerDetalle("diasSubsidiados")}
                               readOnly
                             />
                             <button
@@ -739,9 +832,8 @@ export function PlameDeclaracionTabs({
                           </div>
                           <FormInput
                             label="No Laborados"
-                            name="diasNoLaborados"
                             type="number"
-                            register={registerDetalle("diasNoLaborados")}
+                            {...registerDetalle("diasNoLaborados")}
                           />
                         </div>
                       </div>
@@ -753,15 +845,13 @@ export function PlameDeclaracionTabs({
                         <div className="grid grid-cols-2 gap-4">
                           <FormInput
                             label="Ordinarias (HHH:MM)"
-                            name="horasOrdinarias"
                             placeholder="240:00"
-                            register={registerDetalle("horasOrdinarias")}
+                            {...registerDetalle("horasOrdinarias")}
                           />
                           <FormInput
                             label="Sobretiempo (HHH:MM)"
-                            name="horasSobretiempo"
                             placeholder="00:00"
-                            register={registerDetalle("horasSobretiempo")}
+                            {...registerDetalle("horasSobretiempo")}
                           />
                         </div>
                       </div>
@@ -1162,7 +1252,9 @@ export function PlameDeclaracionTabs({
       {isProcessingGlobal && (
         <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="mt-4 text-sm font-bold text-indigo-700 dark:text-indigo-400 animate-pulse">Procesando...</span>
+          <span className="mt-4 text-sm font-bold text-indigo-700 dark:text-indigo-400 animate-pulse">
+            Procesando...
+          </span>
         </div>
       )}
     </div>

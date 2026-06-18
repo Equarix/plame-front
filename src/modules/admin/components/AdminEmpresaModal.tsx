@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { empresaSchema, type EmpresaFormType } from "../schemas/empresa.schema";
 import { FormInput } from "@/components/forms/FormInput";
@@ -26,10 +26,10 @@ export function AdminEmpresaModal({
   const isEditing = !!empresaToEdit;
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    control,
   } = useForm<EmpresaFormType>({
     resolver: zodResolver(empresaSchema),
     defaultValues: {
@@ -56,7 +56,7 @@ export function AdminEmpresaModal({
         });
       }
     }
-  }, [isOpen, empresaToEdit, reset]);
+  }, [isOpen, empresaToEdit]);
 
   if (!isOpen) return null;
 
@@ -74,7 +74,11 @@ export function AdminEmpresaModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiPlusCircle className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiPlusCircle className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
               {isEditing ? "Editar Empresa" : "Registrar Nueva Empresa"}
@@ -90,31 +94,44 @@ export function AdminEmpresaModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            label="Razón Social / Nombre"
+          <Controller
             name="name"
-            placeholder="Empresa SAC"
-            disabled={isLoading}
-            register={register("name")}
-            error={errors.name?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                {...field}
+                label="Razón Social / Nombre"
+                placeholder="Empresa SAC"
+                disabled={isLoading}
+                error={errors.name?.message}
+              />
+            )}
           />
-
-          <FormInput
-            label="Número de RUC"
+          <Controller
             name="ruc"
-            placeholder="20123456789"
-            disabled={isLoading}
-            register={register("ruc")}
-            error={errors.ruc?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                {...field}
+                label="Número de RUC"
+                placeholder="20123456789"
+                disabled={isLoading}
+                error={errors.ruc?.message}
+              />
+            )}
           />
-
-          <FormInput
-            label="Dirección Fiscal"
+          <Controller
             name="address"
-            placeholder="Av. Las Flores 123, Lima"
-            disabled={isLoading}
-            register={register("address")}
-            error={errors.address?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                {...field}
+                label="Dirección Fiscal"
+                placeholder="Av. Las Flores 123, Lima"
+                disabled={isLoading}
+                error={errors.address?.message}
+              />
+            )}
           />
 
           {/* Action buttons */}
@@ -132,7 +149,11 @@ export function AdminEmpresaModal({
               disabled={isLoading}
               className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
             >
-              {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Empresa"}
+              {isLoading
+                ? "Procesando..."
+                : isEditing
+                  ? "Guardar Cambios"
+                  : "Crear Empresa"}
             </button>
           </div>
         </form>

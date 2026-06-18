@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { entidadBancariaSchema, type EntidadBancariaFormType } from "../schemas/entidad-bancaria.schema";
+import {
+  entidadBancariaSchema,
+  type EntidadBancariaFormType,
+} from "../schemas/entidad-bancaria.schema";
 import { FormInput } from "@/components/forms/FormInput";
 import type { EntidadBancariaData } from "@/interface/response.interface";
 import { FiX, FiPlusCircle, FiEdit2 } from "react-icons/fi";
@@ -50,7 +53,7 @@ export function AdminEntidadBancariaModal({
         });
       }
     }
-  }, [isOpen, entidadToEdit, reset]);
+  }, [isOpen, entidadToEdit]);
 
   if (!isOpen) return null;
 
@@ -68,10 +71,16 @@ export function AdminEntidadBancariaModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiPlusCircle className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiPlusCircle className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
-              {isEditing ? "Editar Entidad Bancaria" : "Registrar Nueva Entidad"}
+              {isEditing
+                ? "Editar Entidad Bancaria"
+                : "Registrar Nueva Entidad"}
             </h3>
           </div>
           <button
@@ -86,10 +95,9 @@ export function AdminEntidadBancariaModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormInput
             label="Nombre de la Entidad Bancaria"
-            name="name"
             placeholder="Banco de la Nación"
             disabled={isLoading}
-            register={register("name")}
+            {...register("name")}
             error={errors.name?.message}
           />
 
@@ -108,7 +116,11 @@ export function AdminEntidadBancariaModal({
               disabled={isLoading}
               className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
             >
-              {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Entidad"}
+              {isLoading
+                ? "Procesando..."
+                : isEditing
+                  ? "Guardar Cambios"
+                  : "Crear Entidad"}
             </button>
           </div>
         </form>

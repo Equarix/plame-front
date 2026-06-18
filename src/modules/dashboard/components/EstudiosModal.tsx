@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FiX, FiBook } from "react-icons/fi";
@@ -10,22 +10,33 @@ import { FormSelect } from "@/components/forms/FormSelect";
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
 const estudioSchema = z.object({
-  formacionCompleta: z.enum(["SUPERIOR_COMPLETA", "UNIVERSITARIA_COMPLETA"] as const, {
-    error: "Debe seleccionar una formación completa",
-  }),
+  formacionCompleta: z.enum(
+    ["SUPERIOR_COMPLETA", "UNIVERSITARIA_COMPLETA"] as const,
+    {
+      error: "Debe seleccionar una formación completa",
+    },
+  ),
   estudioPeru: z.string().min(1, "Indique si estudió en Perú"),
   privado: z.string().min(1, "Indique si el régimen es privado"),
-  tipoEducacion: z.enum(["INSTITUTO", "UNIVERSIDAD", "POLICIALES", "NO_ESPECIFICA"] as const, {
-    error: "Debe seleccionar el tipo de institución",
-  }),
-  nombreInstitucion: z.string().min(1, "El nombre de la institución es requerido"),
+  tipoEducacion: z.enum(
+    ["INSTITUTO", "UNIVERSIDAD", "POLICIALES", "NO_ESPECIFICA"] as const,
+    {
+      error: "Debe seleccionar el tipo de institución",
+    },
+  ),
+  nombreInstitucion: z
+    .string()
+    .min(1, "El nombre de la institución es requerido"),
   nombreCarrera: z.string().min(1, "El nombre de la carrera es requerido"),
   añoEgreso: z
     .string()
     .min(1, "El año de egreso es requerido")
     .refine(
-      (v) => !isNaN(Number(v)) && Number(v) >= 1950 && Number(v) <= new Date().getFullYear(),
-      `El año debe estar entre 1950 y ${new Date().getFullYear()}`
+      (v) =>
+        !isNaN(Number(v)) &&
+        Number(v) >= 1950 &&
+        Number(v) <= new Date().getFullYear(),
+      `El año debe estar entre 1950 y ${new Date().getFullYear()}`,
     ),
 });
 
@@ -42,8 +53,14 @@ interface EstudioFormType {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const FORMACION_COMPLETA_OPTIONS = [
-  { value: "SUPERIOR_COMPLETA", label: "EDUCACIÓN SUPERIOR (INSTITUTO SUPERIOR, ETC) COMPLETA" },
-  { value: "UNIVERSITARIA_COMPLETA", label: "EDUCACIÓN UNIVERSITARIA COMPLETA" },
+  {
+    value: "SUPERIOR_COMPLETA",
+    label: "EDUCACIÓN SUPERIOR (INSTITUTO SUPERIOR, ETC) COMPLETA",
+  },
+  {
+    value: "UNIVERSITARIA_COMPLETA",
+    label: "EDUCACIÓN UNIVERSITARIA COMPLETA",
+  },
 ];
 
 const TIPO_EDUCACION_OPTIONS = [
@@ -69,9 +86,9 @@ interface EstudiosModalProps {
 
 export function EstudiosModal({ onClose, onAdd }: EstudiosModalProps) {
   const {
-    register,
     handleSubmit,
     formState: { errors },
+    control,
   } = useForm<EstudioFormType>({
     resolver: zodResolver(estudioSchema),
     defaultValues: {
@@ -109,7 +126,6 @@ export function EstudiosModal({ onClose, onAdd }: EstudiosModalProps) {
 
       {/* Modal Box */}
       <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-overlay shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200/40 dark:border-zinc-800/40 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -142,65 +158,100 @@ export function EstudiosModal({ onClose, onAdd }: EstudiosModalProps) {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <FormSelect
-                label="Formación Superior Completa"
+              <Controller
                 name="formacionCompleta"
-                options={FORMACION_COMPLETA_OPTIONS}
-                register={register("formacionCompleta")}
-                error={errors.formacionCompleta?.message}
+                control={control}
+                render={({ field }) => (
+                  <FormSelect
+                    label="Formación Superior Completa"
+                    options={FORMACION_COMPLETA_OPTIONS}
+                    {...field}
+                    error={errors.formacionCompleta?.message}
+                  />
+                )}
               />
             </div>
 
-            <FormSelect
-              label="¿Estudió en una Institución del Perú?"
+            <Controller
               name="estudioPeru"
-              options={BOOL_OPTIONS}
-              register={register("estudioPeru")}
-              error={errors.estudioPeru?.message}
+              control={control}
+              render={({ field }) => (
+                <FormSelect
+                  label="¿Estudió en una Institución del Perú?"
+                  options={BOOL_OPTIONS}
+                  {...field}
+                  error={errors.estudioPeru?.message}
+                />
+              )}
             />
 
-            <FormSelect
-              label="Régimen de la Institución Educativa"
+            <Controller
               name="privado"
-              options={[
-                { value: "false", label: "Pública" },
-                { value: "true", label: "Privada" },
-              ]}
-              register={register("privado")}
-              error={errors.privado?.message}
+              control={control}
+              render={({ field }) => (
+                <FormSelect
+                  label="Régimen de la Institución Educativa"
+                  options={[
+                    { value: "false", label: "Pública" },
+                    { value: "true", label: "Privada" },
+                  ]}
+                  {...field}
+                  error={errors.privado?.message}
+                />
+              )}
             />
 
-            <FormSelect
-              label="Tipo de Institución Educativa"
+            <Controller
               name="tipoEducacion"
-              options={TIPO_EDUCACION_OPTIONS}
-              register={register("tipoEducacion")}
-              error={errors.tipoEducacion?.message}
+              control={control}
+              render={({ field }) => (
+                <FormSelect
+                  label="Tipo de Institución Educativa"
+                  options={TIPO_EDUCACION_OPTIONS}
+                  {...field}
+                  error={errors.tipoEducacion?.message}
+                />
+              )}
             />
 
-            <FormInput
-              label="Año de Egreso"
+            <Controller
               name="añoEgreso"
-              type="number"
-              placeholder={String(new Date().getFullYear())}
-              register={register("añoEgreso")}
-              error={errors.añoEgreso?.message}
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label="Año de Egreso"
+                  type="number"
+                  placeholder={String(new Date().getFullYear())}
+                  {...field}
+                  error={errors.añoEgreso?.message}
+                />
+              )}
             />
 
-            <FormInput
-              label="Nombre de la Institución Educativa"
+            <Controller
               name="nombreInstitucion"
-              placeholder="Ej: Universidad Nacional Mayor de San Marcos"
-              register={register("nombreInstitucion")}
-              error={errors.nombreInstitucion?.message}
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label="Nombre de la Institución Educativa"
+                  placeholder="Ej: Universidad Nacional Mayor de San Marcos"
+                  {...field}
+                  error={errors.nombreInstitucion?.message}
+                />
+              )}
             />
 
-            <FormInput
-              label="Carrera"
+            <Controller
               name="nombreCarrera"
-              placeholder="Ej: Ingeniería de Sistemas"
-              register={register("nombreCarrera")}
-              error={errors.nombreCarrera?.message}
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label="Carrera"
+                  placeholder="Ej: Ingeniería de Sistemas"
+                  {...field}
+                  error={errors.nombreCarrera?.message}
+                />
+              )}
             />
           </div>
         </form>

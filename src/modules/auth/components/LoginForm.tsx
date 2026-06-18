@@ -34,23 +34,21 @@ export function LoginForm() {
       {/* Username Field */}
       <FormInput
         label="Nombre de usuario"
-        name="username"
         placeholder="Introduce tu usuario"
         disabled={isLoadLogin}
         icon={FaUser}
-        register={register("username")}
+        {...register("username")}
         error={errors.username?.message}
       />
 
       {/* Password Field */}
       <FormInput
         label="Contraseña"
-        name="password"
         type={showPassword ? "text" : "password"}
         placeholder="••••••••"
         disabled={isLoadLogin}
         icon={FaLock}
-        register={register("password")}
+        {...register("password")}
         error={errors.password?.message}
         rightElement={
           <button

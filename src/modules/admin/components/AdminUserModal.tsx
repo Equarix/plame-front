@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, type UserFormType } from "../schemas/user.schema";
 import { FormInput } from "@/components/forms/FormInput";
@@ -27,10 +27,10 @@ export function AdminUserModal({
   const isEditing = !!userToEdit;
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    control,
   } = useForm<UserFormType>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -63,7 +63,7 @@ export function AdminUserModal({
         });
       }
     }
-  }, [isOpen, userToEdit, reset]);
+  }, [isOpen, userToEdit]);
 
   if (!isOpen) return null;
 
@@ -81,7 +81,11 @@ export function AdminUserModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiUserPlus className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiUserPlus className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
               {isEditing ? "Editar Usuario" : "Registrar Nuevo Usuario"}
@@ -97,53 +101,82 @@ export function AdminUserModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            label="Nombre"
+          <Controller
             name="name"
-            placeholder="Juan"
-            disabled={isLoading}
-            register={register("name")}
-            error={errors.name?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Nombre"
+                placeholder="Juan"
+                disabled={isLoading}
+                error={errors.name?.message}
+                {...field}
+              />
+            )}
           />
 
-          <FormInput
-            label="Apellido"
+          <Controller
             name="lastName"
-            placeholder="Perez"
-            disabled={isLoading}
-            register={register("lastName")}
-            error={errors.lastName?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Apellido"
+                placeholder="Perez"
+                disabled={isLoading}
+                error={errors.lastName?.message}
+                {...field}
+              />
+            )}
           />
 
-          <FormInput
-            label="Nombre de Usuario"
+          <Controller
             name="username"
-            placeholder="jperez"
-            disabled={isLoading}
-            register={register("username")}
-            error={errors.username?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Nombre de Usuario"
+                placeholder="jperez"
+                disabled={isLoading}
+                error={errors.username?.message}
+                {...field}
+              />
+            )}
           />
 
-          <FormSelect
-            label="Rol del Usuario"
+          <Controller
             name="role"
-            disabled={isLoading}
-            register={register("role")}
-            error={errors.role?.message}
-            options={[
-              { value: "USER", label: "USER (Contribuyente estándar)" },
-              { value: "ADMIN", label: "ADMIN (Administrador)" },
-            ]}
+            control={control}
+            render={({ field }) => (
+              <FormSelect
+                label="Rol del Usuario"
+                disabled={isLoading}
+                error={errors.role?.message}
+                options={[
+                  { value: "USER", label: "USER (Contribuyente estándar)" },
+                  { value: "ADMIN", label: "ADMIN (Administrador)" },
+                ]}
+                {...field}
+              />
+            )}
           />
 
-          <FormInput
-            label={isEditing ? "Contraseña (Opcional - dejar vacío para no cambiar)" : "Contraseña"}
+          <Controller
             name="password"
-            type="password"
-            placeholder="••••••••"
-            disabled={isLoading}
-            register={register("password")}
-            error={errors.password?.message}
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label={
+                  isEditing
+                    ? "Contraseña (Opcional - dejar vacío para no cambiar)"
+                    : "Contraseña"
+                }
+                type="password"
+                placeholder="••••••••"
+                disabled={isLoading}
+                error={errors.password?.message}
+                {...field}
+              />
+            )}
           />
 
           {/* Action buttons */}
@@ -161,7 +194,11 @@ export function AdminUserModal({
               disabled={isLoading}
               className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
             >
-              {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Usuario"}
+              {isLoading
+                ? "Procesando..."
+                : isEditing
+                  ? "Guardar Cambios"
+                  : "Crear Usuario"}
             </button>
           </div>
         </form>

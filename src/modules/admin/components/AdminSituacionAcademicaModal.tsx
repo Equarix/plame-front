@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { situacionAcademicaSchema, type SituacionAcademicaFormType } from "../schemas/situacion-academica.schema";
+import {
+  situacionAcademicaSchema,
+  type SituacionAcademicaFormType,
+} from "../schemas/situacion-academica.schema";
 import { FormInput } from "@/components/forms/FormInput";
 import type { SituacionAcademicaData } from "@/interface/response.interface";
 import { FiX, FiPlusCircle, FiEdit2 } from "react-icons/fi";
@@ -53,7 +56,7 @@ export function AdminSituacionAcademicaModal({
         });
       }
     }
-  }, [isOpen, situacionToEdit, reset]);
+  }, [isOpen, situacionToEdit]);
 
   if (!isOpen) return null;
 
@@ -71,10 +74,16 @@ export function AdminSituacionAcademicaModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiPlusCircle className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiPlusCircle className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
-              {isEditing ? "Editar Situación Académica" : "Registrar Nueva Situación"}
+              {isEditing
+                ? "Editar Situación Académica"
+                : "Registrar Nueva Situación"}
             </h3>
           </div>
           <button
@@ -89,10 +98,9 @@ export function AdminSituacionAcademicaModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormInput
             label="Nombre de la Situación Académica"
-            name="nombre"
             placeholder="Educación Superior Completa"
             disabled={isLoading}
-            register={register("nombre")}
+            {...register("nombre")}
             error={errors.nombre?.message}
           />
 
@@ -113,7 +121,9 @@ export function AdminSituacionAcademicaModal({
             </label>
           </div>
           {errors.requiereEstudios && (
-            <p className="mt-1.5 text-xs text-bento-danger font-medium">{errors.requiereEstudios.message}</p>
+            <p className="mt-1.5 text-xs text-bento-danger font-medium">
+              {errors.requiereEstudios.message}
+            </p>
           )}
 
           {/* Action buttons */}
@@ -131,7 +141,11 @@ export function AdminSituacionAcademicaModal({
               disabled={isLoading}
               className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
             >
-              {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Situación"}
+              {isLoading
+                ? "Procesando..."
+                : isEditing
+                  ? "Guardar Cambios"
+                  : "Crear Situación"}
             </button>
           </div>
         </form>

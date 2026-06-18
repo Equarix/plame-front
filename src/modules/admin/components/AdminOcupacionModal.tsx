@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ocupacionSchema, type OcupacionFormType } from "../schemas/ocupacion.schema";
+import {
+  ocupacionSchema,
+  type OcupacionFormType,
+} from "../schemas/ocupacion.schema";
 import { FormInput } from "@/components/forms/FormInput";
 import type { OcupacionData } from "@/interface/response.interface";
 import { FiX, FiPlusCircle, FiEdit2 } from "react-icons/fi";
@@ -30,6 +33,7 @@ export function AdminOcupacionModal({
     handleSubmit,
     reset,
     formState: { errors },
+    watch,
   } = useForm<OcupacionFormType>({
     resolver: zodResolver(ocupacionSchema),
     defaultValues: {
@@ -37,7 +41,9 @@ export function AdminOcupacionModal({
     },
   });
 
-  // Reset values when modal opens/closes or ocupacionToEdit changes
+  console.log({ errors });
+  console.log({ watch: watch() });
+
   useEffect(() => {
     if (isOpen) {
       if (ocupacionToEdit) {
@@ -50,7 +56,7 @@ export function AdminOcupacionModal({
         });
       }
     }
-  }, [isOpen, ocupacionToEdit, reset]);
+  }, [isOpen, ocupacionToEdit]);
 
   if (!isOpen) return null;
 
@@ -68,7 +74,11 @@ export function AdminOcupacionModal({
         <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-bento-control bg-bento-primary text-zinc-950 flex items-center justify-center">
-              {isEditing ? <FiEdit2 className="text-sm" /> : <FiPlusCircle className="text-sm" />}
+              {isEditing ? (
+                <FiEdit2 className="text-sm" />
+              ) : (
+                <FiPlusCircle className="text-sm" />
+              )}
             </div>
             <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight">
               {isEditing ? "Editar Ocupación" : "Registrar Nueva Ocupación"}
@@ -86,10 +96,9 @@ export function AdminOcupacionModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormInput
             label="Nombre de la Ocupación"
-            name="name"
             placeholder="Administrador de Redes"
             disabled={isLoading}
-            register={register("name")}
+            {...register("name")}
             error={errors.name?.message}
           />
 
@@ -108,7 +117,11 @@ export function AdminOcupacionModal({
               disabled={isLoading}
               className="px-4 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-bold shadow-md transition-all cursor-pointer border border-zinc-900/10"
             >
-              {isLoading ? "Procesando..." : isEditing ? "Guardar Cambios" : "Crear Ocupación"}
+              {isLoading
+                ? "Procesando..."
+                : isEditing
+                  ? "Guardar Cambios"
+                  : "Crear Ocupación"}
             </button>
           </div>
         </form>

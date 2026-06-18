@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { Api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FiSearch, FiX, FiCheck } from "react-icons/fi";
-import type { ApiResponse, EntidadBancariaData } from "@/interface/response.interface";
+import type {
+  ApiResponse,
+  EntidadBancariaData,
+} from "@/interface/response.interface";
 
 export function BancoAutocomplete() {
   const { token } = useAuth();
   const {
-    register,
     setValue,
     watch,
     formState: { errors },
+    control,
   } = useFormContext();
 
   const selectedEntidadId = watch("entidadId");
@@ -38,7 +41,10 @@ export function BancoAutocomplete() {
   // Click outside handler to close dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         if (selectedEntidadName) {
           setSearchQuery(selectedEntidadName);
@@ -106,8 +112,17 @@ export function BancoAutocomplete() {
   return (
     <div ref={containerRef} className="flex flex-col w-full relative">
       {/* Hidden inputs for form state */}
-      <input type="hidden" {...register("entidadId")} />
-      <input type="hidden" {...register("entidadNombre")} />
+
+      <Controller
+        name="entidadId"
+        control={control}
+        render={({ field }) => <input type="hidden" {...field} />}
+      />
+      <Controller
+        name="entidadNombre"
+        control={control}
+        render={({ field }) => <input type="hidden" {...field} />}
+      />
 
       <label className="block text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-1.5 select-none">
         Entidad bancaria
@@ -162,37 +177,35 @@ export function BancoAutocomplete() {
       {/* Results Dropdown Overlay */}
       {isOpen && (results.length > 0 || searchQuery.trim() !== "") && (
         <div className="absolute z-50 left-0 right-0 top-full mt-1.5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-250 dark:border-zinc-800 rounded-bento-control shadow-lg max-h-60 overflow-y-auto overflow-x-hidden animate-fadeIn py-1">
-          {results.length > 0 ? (
-            results.map((bank) => {
-              const isSelected = selectedEntidadId === bank.entidadId;
-              return (
-                <button
-                  key={bank.entidadId}
-                  type="button"
-                  onClick={() => handleSelect(bank)}
-                  className={`w-full text-left px-3.5 py-2.5 text-xs font-bold transition-all flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer ${
-                    isSelected
-                      ? "text-bento-secondary bg-bento-secondary/5 dark:bg-bento-secondary/5"
-                      : "text-zinc-750 dark:text-zinc-200"
-                  }`}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-bold">{bank.name}</span>
-                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
-                      ID: {bank.entidadId}
-                    </span>
-                  </div>
-                  {isSelected && <FiCheck className="text-sm shrink-0" />}
-                </button>
-              );
-            })
-          ) : (
-            !isLoading && (
-              <div className="px-3.5 py-3 text-xs font-bold text-zinc-400 dark:text-zinc-500 text-center select-none">
-                No se encontraron entidades bancarias
-              </div>
-            )
-          )}
+          {results.length > 0
+            ? results.map((bank) => {
+                const isSelected = selectedEntidadId === bank.entidadId;
+                return (
+                  <button
+                    key={bank.entidadId}
+                    type="button"
+                    onClick={() => handleSelect(bank)}
+                    className={`w-full text-left px-3.5 py-2.5 text-xs font-bold transition-all flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer ${
+                      isSelected
+                        ? "text-bento-secondary bg-bento-secondary/5 dark:bg-bento-secondary/5"
+                        : "text-zinc-750 dark:text-zinc-200"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold">{bank.name}</span>
+                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+                        ID: {bank.entidadId}
+                      </span>
+                    </div>
+                    {isSelected && <FiCheck className="text-sm shrink-0" />}
+                  </button>
+                );
+              })
+            : !isLoading && (
+                <div className="px-3.5 py-3 text-xs font-bold text-zinc-400 dark:text-zinc-500 text-center select-none">
+                  No se encontraron entidades bancarias
+                </div>
+              )}
         </div>
       )}
     </div>

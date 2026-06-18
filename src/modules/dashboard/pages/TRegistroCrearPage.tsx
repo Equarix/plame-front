@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useAuth } from "@/components/context/AuthContext";
-import { FormProvider } from "react-hook-form";
+import { Controller, FormProvider } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -16,15 +16,28 @@ import {
 } from "react-icons/fi";
 import { toast } from "sonner";
 
-import { type DireccionFormType, type PersonaFormType } from "../../admin/schemas/persona.schema";
+import {
+  type DireccionFormType,
+  type PersonaFormType,
+} from "../../admin/schemas/persona.schema";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { FormInput } from "@/components/forms/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect";
 import { DireccionModal } from "../../persona/components/DireccionModal";
 import { AddAddressModal } from "../../persona/components/AddAddressModal";
 import { PersonaSummaryCard } from "../../persona/components/PersonaSummaryCard";
-import { useTRegistroForm, type CategoriaType, type EstudiosInput } from "../hooks/useTRegistroForm";
-import { Tabs, TabHeader, TabHeaderButton, TabBody, Tab } from "@/components/Tabs/Tabs";
+import {
+  useTRegistroForm,
+  type CategoriaType,
+  type EstudiosInput,
+} from "../hooks/useTRegistroForm";
+import {
+  Tabs,
+  TabHeader,
+  TabHeaderButton,
+  TabBody,
+  Tab,
+} from "@/components/Tabs/Tabs";
 import { ResumenTab } from "../components/ResumenTab";
 import { TrabajadorTab } from "../components/TrabajadorTab";
 import { PensionistaTab } from "../components/PensionistaTab";
@@ -84,10 +97,10 @@ export function TRegistroCrearPage() {
   } = useTRegistroForm();
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     watch,
+    control,
   } = methods;
 
   const watchDireccion = watch("direccion");
@@ -149,19 +162,21 @@ export function TRegistroCrearPage() {
         sexo: tPersonaDetails.persona.sexo,
         estadoCivil: tPersonaDetails.persona.estadoCivil,
         nacionalidad: tPersonaDetails.persona.nacionalidad,
-        direccion: tPersonaDetails.persona.direcciones && tPersonaDetails.persona.direcciones.length > 0
-          ? tPersonaDetails.persona.direcciones[0]
-          : {
-              personaId: 0,
-              departamentoId: 0,
-              provinciaId: 0,
-              distritoId: 0,
-              tipoVia: "AVENIDA",
-              nombreVia: "",
-              numero: "",
-              tipoZona: "URBANA",
-              nombreZona: "",
-            },
+        direccion:
+          tPersonaDetails.persona.direcciones &&
+          tPersonaDetails.persona.direcciones.length > 0
+            ? tPersonaDetails.persona.direcciones[0]
+            : {
+                personaId: 0,
+                departamentoId: 0,
+                provinciaId: 0,
+                distritoId: 0,
+                tipoVia: "AVENIDA",
+                nombreVia: "",
+                numero: "",
+                tipoZona: "URBANA",
+                nombreZona: "",
+              },
 
         fechaInicio: formatDate(tPersonaDetails.fechaInicio),
         fechaFin: formatDate(tPersonaDetails.periodoFin),
@@ -189,31 +204,57 @@ export function TRegistroCrearPage() {
         regimenSalud: tPersonaDetails.regimenSalud || "ESSALUD_REGULAR",
         fechaInicioSalud: formatDate(tPersonaDetails.fechaInicioSalud),
         fechaFinSalud: formatDate(tPersonaDetails.fechaFinSalud),
-        regimenPensionario: tPersonaDetails.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
-        fechaInicioPensionario: formatDate(tPersonaDetails.fechaInicioPensionario),
+        regimenPensionario:
+          tPersonaDetails.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
+        fechaInicioPensionario: formatDate(
+          tPersonaDetails.fechaInicioPensionario,
+        ),
         fechaFinPensionario: formatDate(tPersonaDetails.fechaFinPensionario),
         CUSPP: tPersonaDetails.CUSPP || "",
         sctr: tPersonaDetails.sctr ? "SI" : "NO",
         pension: tPersonaDetails.pension || "ONP",
         salud: tPersonaDetails.salud || "ESSALUD",
-        fechaInicioSaludPension: formatDate(tPersonaDetails.fechaInicioSaludPension),
+        fechaInicioSaludPension: formatDate(
+          tPersonaDetails.fechaInicioSaludPension,
+        ),
         fechaFinSaludPension: formatDate(tPersonaDetails.fechaFinSaludPension),
 
         situacionEducativaId: tPersonaDetails.situacionEducativaId || 1,
-        situacionEducativaNombre: tPersonaDetails.situacionEducativa?.nombre || "",
-        quintaCategoriaExonerada: tPersonaDetails.quintaCategoriaExonerada ? "SI" : "NO",
-        evitaDobleImposicion: tPersonaDetails.evitaDobleImposicion ? "SI" : "NO",
+        situacionEducativaNombre:
+          tPersonaDetails.situacionEducativa?.nombre || "",
+        quintaCategoriaExonerada: tPersonaDetails.quintaCategoriaExonerada
+          ? "SI"
+          : "NO",
+        evitaDobleImposicion: tPersonaDetails.evitaDobleImposicion
+          ? "SI"
+          : "NO",
       };
 
       methods.reset(formattedValues as any);
-      methods.setValue("ocupacionNombre" as keyof PersonaFormType, tPersonaDetails.ocupacion?.name || "");
-      methods.setValue("situacionEducativaNombre" as keyof PersonaFormType, tPersonaDetails.situacionEducativa?.nombre || "");
+      methods.setValue(
+        "ocupacionNombre" as keyof PersonaFormType,
+        tPersonaDetails.ocupacion?.name || "",
+      );
+      methods.setValue(
+        "situacionEducativaNombre" as keyof PersonaFormType,
+        tPersonaDetails.situacionEducativa?.nombre || "",
+      );
     }
-  }, [tPersonaDetails, methods, setSelectedPersona, setTelefono, setEmail, setCategoria]);
+  }, [
+    tPersonaDetails,
+    methods,
+    setSelectedPersona,
+    setTelefono,
+    setEmail,
+    setCategoria,
+  ]);
 
   if (successData) {
     return (
-      <DashboardLayout title={editId ? "Editar T-Registro" : "Registrar T-Registro"} icon={<FiPlus className="text-sm" />}>
+      <DashboardLayout
+        title={editId ? "Editar T-Registro" : "Registrar T-Registro"}
+        icon={<FiPlus className="text-sm" />}
+      >
         <TRegistroSuccessScreen
           data={successData}
           onRetornar={() => {
@@ -227,7 +268,10 @@ export function TRegistroCrearPage() {
 
   if (editId && isLoadingDetails) {
     return (
-      <DashboardLayout title="Editar T-Registro" icon={<FiPlus className="text-sm" />}>
+      <DashboardLayout
+        title="Editar T-Registro"
+        icon={<FiPlus className="text-sm" />}
+      >
         <div className="p-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
           Cargando detalles del trabajador...
         </div>
@@ -252,7 +296,9 @@ export function TRegistroCrearPage() {
     }
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Debe ingresar un correo electrónico válido para el prestador");
+      toast.error(
+        "Debe ingresar un correo electrónico válido para el prestador",
+      );
       return;
     }
 
@@ -287,7 +333,9 @@ export function TRegistroCrearPage() {
       quintaCategoriaExonerada?: string;
       evitaDobleImposicion?: string;
     };
-    const activeOcupacionId = formValues.ocupacionId ? Number(formValues.ocupacionId) : undefined;
+    const activeOcupacionId = formValues.ocupacionId
+      ? Number(formValues.ocupacionId)
+      : undefined;
 
     if (categoria === "TRABAJADOR" && !activeOcupacionId) {
       toast.error("Debe seleccionar una ocupación para el trabajador");
@@ -300,31 +348,61 @@ export function TRegistroCrearPage() {
       personaId: selectedPersona.personaId,
       categoria: categoria,
       tEmpresaCompanyId: companyId,
-      periodoInicio: editId ? tPersonaDetails?.periodoInicio : new Date().toISOString(),
-      fechaInicio: formValues.fechaInicio ? new Date(formValues.fechaInicio).toISOString() : new Date().toISOString(),
+      periodoInicio: editId
+        ? tPersonaDetails?.periodoInicio
+        : new Date().toISOString(),
+      fechaInicio: formValues.fechaInicio
+        ? new Date(formValues.fechaInicio).toISOString()
+        : new Date().toISOString(),
       tipoTrabajador: formValues.tipoTrabajador || "EMPLEADO",
-      fechaIngreso: editId ? tPersonaDetails?.fechaIngreso : new Date().toISOString(),
+      fechaIngreso: editId
+        ? tPersonaDetails?.fechaIngreso
+        : new Date().toISOString(),
       regimenLaboral: formValues.regimenLaboral || "D_LEG_728",
       ocupacionId: activeOcupacionId || 1,
       tipoContrato: formValues.tipoContrato || "PLAZO_INDETERMINADO",
       tipoPago: formValues.tipoPago || "EFECTIVO",
       entidadId: formValues.entidadId ? Number(formValues.entidadId) : 1,
-      montoRemuneracionInicial: formValues.montoRemuneracion ? Number(formValues.montoRemuneracion) : 1025,
+      montoRemuneracionInicial: formValues.montoRemuneracion
+        ? Number(formValues.montoRemuneracion)
+        : 1025,
 
       regimenSalud: formValues.regimenSalud || "ESSALUD_REGULAR",
-      fechaInicioSalud: formValues.fechaInicioSalud ? new Date(formValues.fechaInicioSalud).toISOString() : new Date().toISOString(),
-      fechaFinSalud: formValues.fechaFinSalud ? new Date(formValues.fechaFinSalud).toISOString() : undefined,
-      regimenPensionario: formValues.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
-      fechaInicioPensionario: formValues.fechaInicioPensionario ? new Date(formValues.fechaInicioPensionario).toISOString() : new Date().toISOString(),
-      fechaFinPensionario: formValues.fechaFinPensionario ? new Date(formValues.fechaFinPensionario).toISOString() : undefined,
-      CUSPP: (formValues.regimenPensionario && formValues.regimenPensionario.startsWith("SPP_")) ? (formValues.CUSPP || undefined) : undefined,
+      fechaInicioSalud: formValues.fechaInicioSalud
+        ? new Date(formValues.fechaInicioSalud).toISOString()
+        : new Date().toISOString(),
+      fechaFinSalud: formValues.fechaFinSalud
+        ? new Date(formValues.fechaFinSalud).toISOString()
+        : undefined,
+      regimenPensionario:
+        formValues.regimenPensionario || "SIN_REGIMEN_PENSIONARIO",
+      fechaInicioPensionario: formValues.fechaInicioPensionario
+        ? new Date(formValues.fechaInicioPensionario).toISOString()
+        : new Date().toISOString(),
+      fechaFinPensionario: formValues.fechaFinPensionario
+        ? new Date(formValues.fechaFinPensionario).toISOString()
+        : undefined,
+      CUSPP:
+        formValues.regimenPensionario &&
+        formValues.regimenPensionario.startsWith("SPP_")
+          ? formValues.CUSPP || undefined
+          : undefined,
       sctr: isSctrActive,
-      pension: isSctrActive ? (formValues.pension || "ONP") : undefined,
-      salud: isSctrActive ? (formValues.salud || "ESSALUD") : undefined,
-      fechaInicioSaludPension: isSctrActive ? (formValues.fechaInicioSaludPension ? new Date(formValues.fechaInicioSaludPension).toISOString() : new Date().toISOString()) : undefined,
-      fechaFinSaludPension: isSctrActive && formValues.fechaFinSaludPension ? new Date(formValues.fechaFinSaludPension).toISOString() : undefined,
+      pension: isSctrActive ? formValues.pension || "ONP" : undefined,
+      salud: isSctrActive ? formValues.salud || "ESSALUD" : undefined,
+      fechaInicioSaludPension: isSctrActive
+        ? formValues.fechaInicioSaludPension
+          ? new Date(formValues.fechaInicioSaludPension).toISOString()
+          : new Date().toISOString()
+        : undefined,
+      fechaFinSaludPension:
+        isSctrActive && formValues.fechaFinSaludPension
+          ? new Date(formValues.fechaFinSaludPension).toISOString()
+          : undefined,
 
-      situacionEducativaId: formValues.situacionEducativaId ? Number(formValues.situacionEducativaId) : 1,
+      situacionEducativaId: formValues.situacionEducativaId
+        ? Number(formValues.situacionEducativaId)
+        : 1,
       estudios: estudios,
       quintaCategoriaExonerada: formValues.quintaCategoriaExonerada === "SI",
       evitaDobleImposicion: formValues.evitaDobleImposicion === "SI",
@@ -345,14 +423,18 @@ export function TRegistroCrearPage() {
           onSuccess: () => {
             router.push("/t-registro");
           },
-        }
+        },
       );
     } else {
       createTPersona(payload);
     }
   };
 
-  const categoriesList: { value: CategoriaType; label: string; desc: string }[] = [
+  const categoriesList: {
+    value: CategoriaType;
+    label: string;
+    desc: string;
+  }[] = [
     {
       value: "TRABAJADOR",
       label: "Trabajador",
@@ -376,9 +458,11 @@ export function TRegistroCrearPage() {
   ];
 
   return (
-    <DashboardLayout title={editId ? "Editar T-Registro" : "Registrar T-Registro"} icon={<FiPlus className="text-sm" />}>
+    <DashboardLayout
+      title={editId ? "Editar T-Registro" : "Registrar T-Registro"}
+      icon={<FiPlus className="text-sm" />}
+    >
       <div className="flex flex-col gap-6">
-
         {/* Datos de Identificación (Siempre visible si está seleccionada) */}
         {selectedPersona ? (
           <PersonaSummaryCard
@@ -395,9 +479,12 @@ export function TRegistroCrearPage() {
             <div className="w-10 h-10 rounded-full bg-bento-danger/10 text-bento-danger flex items-center justify-center mx-auto mb-3">
               <FiLock className="text-lg" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-850 dark:text-zinc-100">Búsqueda Requerida</h4>
+            <h4 className="text-sm font-bold text-zinc-850 dark:text-zinc-100">
+              Búsqueda Requerida
+            </h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              Debe buscar o registrar una persona por DNI para habilitar el formulario de T-Registro.
+              Debe buscar o registrar una persona por DNI para habilitar el
+              formulario de T-Registro.
             </p>
             <button
               onClick={handleOpenSearch}
@@ -411,40 +498,62 @@ export function TRegistroCrearPage() {
         {/* Categoría & Tabs (Deshabilitado si no hay persona seleccionada) */}
         <FormProvider {...methods}>
           <div
-            className={`bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col transition-all duration-300 ${!selectedPersona ? "blur-sm opacity-45 pointer-events-none select-none" : ""
-              }`}
+            className={`bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 sm:p-6 shadow-sm flex flex-col transition-all duration-300 ${
+              !selectedPersona
+                ? "blur-sm opacity-45 pointer-events-none select-none"
+                : ""
+            }`}
           >
             <div className="border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4 mb-5">
               <h3 className="font-bold text-bento-text dark:text-zinc-50 text-base leading-none">
                 Categoría
               </h3>
               <p className="text-xs text-zinc-500 mt-1.5 leading-none">
-                Especifique la categoría y configure la relación de prestaciones correspondientes
+                Especifique la categoría y configure la relación de prestaciones
+                correspondientes
               </p>
             </div>
 
             {/* Tabs Navigation & Content */}
-            <Tabs defaultValue="resumen" className="mt-4" onChange={(val) => setActiveTab(val as any)}>
+            <Tabs
+              defaultValue="resumen"
+              className="mt-4"
+              onChange={(val) => setActiveTab(val as any)}
+            >
               <TabHeader>
-                <TabHeaderButton value="resumen">Resumen de Prestadores</TabHeaderButton>
+                <TabHeaderButton value="resumen">
+                  Resumen de Prestadores
+                </TabHeaderButton>
                 <TabHeaderButton
                   value="trabajador"
                   disabled={categoria !== "TRABAJADOR"}
-                  className={categoria !== "TRABAJADOR" ? "opacity-50 cursor-not-allowed" : ""}
+                  className={
+                    categoria !== "TRABAJADOR"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
                 >
                   Trabajador
                 </TabHeaderButton>
                 <TabHeaderButton
                   value="pensionista"
                   disabled={categoria !== "PENSIONISTA"}
-                  className={categoria !== "PENSIONISTA" ? "opacity-50 cursor-not-allowed" : ""}
+                  className={
+                    categoria !== "PENSIONISTA"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
                 >
                   Pensionista
                 </TabHeaderButton>
                 <TabHeaderButton
                   value="formacion"
                   disabled={categoria !== "PERSONAL_FORMACION_LABORAL"}
-                  className={categoria !== "PERSONAL_FORMACION_LABORAL" ? "opacity-50 cursor-not-allowed" : ""}
+                  className={
+                    categoria !== "PERSONAL_FORMACION_LABORAL"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
                 >
                   Personal en formación laboral
                 </TabHeaderButton>
@@ -491,7 +600,9 @@ export function TRegistroCrearPage() {
                 disabled={isCreatingTPersona || isUpdatingTPersona}
                 className="px-5 py-2 bg-bento-secondary hover:opacity-95 text-zinc-950 rounded-bento-control text-xs font-extrabold shadow-md transition-all cursor-pointer border border-zinc-900/10 flex items-center gap-1.5"
               >
-                {isCreatingTPersona || isUpdatingTPersona ? "Grabando..." : "Grabar"}
+                {isCreatingTPersona || isUpdatingTPersona
+                  ? "Grabando..."
+                  : "Grabar"}
               </button>
             </div>
           </div>
@@ -509,7 +620,6 @@ export function TRegistroCrearPage() {
 
           {/* Modal Box */}
           <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-overlay shadow-xl p-6 sm:p-7 flex flex-col max-h-[85vh]">
-
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-zinc-200/40 dark:border-zinc-800/40 mb-5 shrink-0">
               <div className="flex items-center gap-2.5">
@@ -518,7 +628,9 @@ export function TRegistroCrearPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-bento-text dark:text-zinc-50 tracking-tight leading-none text-sm sm:text-base">
-                    {formPhase === "search" ? "Buscar Persona" : "Registrar Persona"}
+                    {formPhase === "search"
+                      ? "Buscar Persona"
+                      : "Registrar Persona"}
                   </h3>
                   <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1.5 leading-none">
                     {formPhase === "search"
@@ -542,7 +654,10 @@ export function TRegistroCrearPage() {
             {formPhase === "search" && (
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="searchDni" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  <label
+                    htmlFor="searchDni"
+                    className="text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+                  >
                     Documento de Identidad (DNI)
                   </label>
                   <div className="relative flex items-center">
@@ -553,7 +668,11 @@ export function TRegistroCrearPage() {
                       type="text"
                       id="searchDni"
                       value={searchDni}
-                      onChange={(e) => setSearchDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      onChange={(e) =>
+                        setSearchDni(
+                          e.target.value.replace(/\D/g, "").slice(0, 8),
+                        )
+                      }
                       placeholder="Ingrese los 8 dígitos del DNI..."
                       required
                       disabled={isSearching}
@@ -586,85 +705,127 @@ export function TRegistroCrearPage() {
             {/* Content phase 2: Register */}
             {formPhase === "register" && (
               <FormProvider {...methods}>
-                <form onSubmit={handleSubmit(onSubmitRegister)} className="flex-1 overflow-y-auto pr-1 space-y-5">
+                <form
+                  onSubmit={handleSubmit(onSubmitRegister)}
+                  className="flex-1 overflow-y-auto pr-1 space-y-5"
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormInput
-                      label="DNI"
+                    <Controller
                       name="dni"
-                      disabled={true}
-                      register={register("dni")}
-                      error={errors.dni?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="DNI"
+                          disabled={true}
+                          {...field}
+                          error={errors.dni?.message as string}
+                        />
+                      )}
                     />
-
-                    <FormInput
-                      label="Nombres"
+                    <Controller
                       name="nombres"
-                      placeholder="e.g. Juan Carlos"
-                      disabled={isCreating}
-                      register={register("nombres")}
-                      error={errors.nombres?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Nombres"
+                          placeholder="e.g. Juan Carlos"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.nombres?.message}
+                        />
+                      )}
                     />
 
-                    <FormInput
-                      label="Apellido Paterno"
+                    <Controller
                       name="apellidoPaterno"
-                      placeholder="e.g. Pérez"
-                      disabled={isCreating}
-                      register={register("apellidoPaterno")}
-                      error={errors.apellidoPaterno?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Apellido Paterno"
+                          placeholder="e.g. Pérez"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.apellidoPaterno?.message}
+                        />
+                      )}
                     />
 
-                    <FormInput
-                      label="Apellido Materno"
+                    <Controller
                       name="apellidoMaterno"
-                      placeholder="e.g. Quispe"
-                      disabled={isCreating}
-                      register={register("apellidoMaterno")}
-                      error={errors.apellidoMaterno?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Apellido Materno"
+                          placeholder="e.g. Quispe"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.apellidoPaterno?.message}
+                        />
+                      )}
                     />
 
-                    <FormInput
-                      label="Fecha de Nacimiento"
+                    <Controller
                       name="fechaNacimiento"
-                      type="date"
-                      disabled={isCreating}
-                      register={register("fechaNacimiento")}
-                      error={errors.fechaNacimiento?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Fecha de Nacimiento"
+                          type="date"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.fechaNacimiento?.message}
+                        />
+                      )}
                     />
 
-                    <FormSelect
-                      label="Sexo"
+                    <Controller
                       name="sexo"
-                      disabled={isCreating}
-                      register={register("sexo")}
-                      error={errors.sexo?.message}
-                      options={[
-                        { value: "MASCULINO", label: "MASCULINO" },
-                        { value: "FEMENINO", label: "FEMENINO" },
-                      ]}
+                      control={control}
+                      render={({ field }) => (
+                        <FormSelect
+                          label="Sexo"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.sexo?.message}
+                          options={[
+                            { value: "MASCULINO", label: "MASCULINO" },
+                            { value: "FEMENINO", label: "FEMENINO" },
+                          ]}
+                        />
+                      )}
                     />
 
-                    <FormSelect
-                      label="Estado Civil"
+                    <Controller
                       name="estadoCivil"
-                      disabled={isCreating}
-                      register={register("estadoCivil")}
-                      error={errors.estadoCivil?.message}
-                      options={[
-                        { value: "SOLTERO", label: "SOLTERO(A)" },
-                        { value: "CASADO", label: "CASADO(A)" },
-                        { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
-                        { value: "VIUDO", label: "VIUDO(A)" },
-                      ]}
+                      control={control}
+                      render={({ field }) => (
+                        <FormSelect
+                          label="Estado Civil"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.estadoCivil?.message}
+                          options={[
+                            { value: "SOLTERO", label: "SOLTERO(A)" },
+                            { value: "CASADO", label: "CASADO(A)" },
+                            { value: "DIVORCIADO", label: "DIVORCIADO(A)" },
+                            { value: "VIUDO", label: "VIUDO(A)" },
+                          ]}
+                        />
+                      )}
                     />
 
-                    <FormInput
-                      label="Nacionalidad"
+                    <Controller
                       name="nacionalidad"
-                      placeholder="e.g. PERUANA"
-                      disabled={isCreating}
-                      register={register("nacionalidad")}
-                      error={errors.nacionalidad?.message}
+                      control={control}
+                      render={({ field }) => (
+                        <FormInput
+                          label="Nacionalidad"
+                          placeholder="e.g. PERUANA"
+                          disabled={isCreating}
+                          {...field}
+                          error={errors.nacionalidad?.message}
+                        />
+                      )}
                     />
                   </div>
 
@@ -679,7 +840,9 @@ export function TRegistroCrearPage() {
                         className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 border border-zinc-200 dark:border-zinc-700 rounded-bento-control text-xs font-bold text-zinc-850 dark:text-zinc-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm w-full sm:w-auto"
                       >
                         <FiMapPin className="text-sm text-zinc-500" />
-                        {hasDireccionFilled ? "Editar Dirección" : "Registrar Dirección"}
+                        {hasDireccionFilled
+                          ? "Editar Dirección"
+                          : "Registrar Dirección"}
                       </button>
                       {hasDireccionFilled && watchDireccion && (
                         <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold truncate max-w-[320px]">
@@ -720,7 +883,6 @@ export function TRegistroCrearPage() {
                 </form>
               </FormProvider>
             )}
-
           </div>
         </div>
       )}
