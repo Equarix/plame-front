@@ -47,8 +47,8 @@ export function FormInput({
 
         {/* Input Control */}
         <input
-          {...(register || {})}
           {...rest}
+          {...(register || {})}
           type={type}
           id={name}
           disabled={disabled}
