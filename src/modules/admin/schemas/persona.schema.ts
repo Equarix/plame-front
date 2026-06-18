@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const direccionSchema = z.object({
+  direccionId: z.number().optional(),
+  personaId: z.number().optional(),
   departamentoId: z
     .number({ message: "Debe seleccionar un departamento" })
     .min(1, "Debe seleccionar un departamento"),

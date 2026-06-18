@@ -15,6 +15,7 @@ import {
   FiLock,
 } from "react-icons/fi";
 import { toast } from "sonner";
+import type { ApiResponse } from "@/interface/response.interface";
 
 import {
   type DireccionFormType,
@@ -30,7 +31,9 @@ import {
   useTRegistroForm,
   type CategoriaType,
   type EstudiosInput,
+  type TRegistroFormValues,
 } from "../hooks/useTRegistroForm";
+import { type TPersonaRow } from "./TRegistroPage";
 import {
   Tabs,
   TabHeader,
@@ -116,14 +119,14 @@ export function TRegistroCrearPage() {
   const [estudios, setEstudios] = React.useState<EstudiosInput[]>([]);
 
   // Fetch details of T-Persona in edit mode
-  const { data: tPersonaDetails, isLoading: isLoadingDetails } = useQuery<any>({
+  const { data: tPersonaDetails, isLoading: isLoadingDetails } = useQuery<TPersonaRow | null>({
     queryKey: ["t-persona-details", editId, token],
     queryFn: async () => {
       if (!editId) return null;
-      const res = await Api.get(`/t-persona/details/${editId}`, {
+      const res = await Api.get<ApiResponse<TPersonaRow>>(`/t-persona/details/${editId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return res.data;
+      return res.data.body;
     },
     enabled: !!editId && !!token,
   });
@@ -139,6 +142,7 @@ export function TRegistroCrearPage() {
   // Pre-populate form values once worker details are retrieved
   React.useEffect(() => {
     if (tPersonaDetails) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setSelectedPersona(tPersonaDetails.persona);
       setTelefono(tPersonaDetails.telefono || "");
       setEmail(tPersonaDetails.email || "");
@@ -147,8 +151,9 @@ export function TRegistroCrearPage() {
       if (tPersonaDetails.estudios) {
         setEstudios(tPersonaDetails.estudios);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
 
-      const formatDate = (isoStr?: string) => {
+      const formatDate = (isoStr?: string | null) => {
         if (!isoStr) return "";
         return isoStr.split("T")[0];
       };
@@ -230,13 +235,13 @@ export function TRegistroCrearPage() {
           : "NO",
       };
 
-      methods.reset(formattedValues as any);
+      methods.reset(formattedValues as TRegistroFormValues);
       methods.setValue(
-        "ocupacionNombre" as keyof PersonaFormType,
+        "ocupacionNombre",
         tPersonaDetails.ocupacion?.name || "",
       );
       methods.setValue(
-        "situacionEducativaNombre" as keyof PersonaFormType,
+        "situacionEducativaNombre",
         tPersonaDetails.situacionEducativa?.nombre || "",
       );
     }
@@ -518,7 +523,7 @@ export function TRegistroCrearPage() {
             <Tabs
               defaultValue="resumen"
               className="mt-4"
-              onChange={(val) => setActiveTab(val as any)}
+              onChange={(val) => setActiveTab(val as "resumen" | "trabajador" | "pensionista" | "formacion")}
             >
               <TabHeader>
                 <TabHeaderButton value="resumen">

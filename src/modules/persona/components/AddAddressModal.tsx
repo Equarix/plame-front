@@ -82,7 +82,7 @@ export function AddAddressModal({ isOpen, onClose, personaId, onSuccess }: AddAd
     e.preventDefault();
     const isValid = await trigger();
     if (isValid) {
-      handleSubmit((data) => submitAddress(data))();
+      handleSubmit((data: DireccionFormType) => submitAddress(data))();
     }
   };
 

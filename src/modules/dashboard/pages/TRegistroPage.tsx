@@ -13,15 +13,21 @@ import {
 } from "@/components/DashboardTableCard";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { formatDireccion } from "@/utils/address";
-import type { EstudiosInput } from "../hooks/useTRegistroForm";
-import type { ApiResponse, EmpresaData } from "@/interface/response.interface";
+import type { EstudiosInput, CategoriaType } from "../hooks/useTRegistroForm";
+import type { ApiResponse, EmpresaData, PersonaData } from "@/interface/response.interface";
 
-interface TPersonaRow {
+interface RawTPersona {
   tPersonaId: number;
   personaId: number;
-  categoria: string;
+}
+
+export interface TPersonaRow {
+  tPersonaId: number;
+  personaId: number;
+  categoria: CategoriaType;
   telefono: string;
   email: string;
+  periodoInicio: string;
   fechaInicio: string;
   periodoFin: string | null;
   motivoBaja: string | null;
@@ -63,37 +69,7 @@ interface TPersonaRow {
   tEmpresaCompanyId: number;
   createAt: string;
   userId: number;
-  persona: {
-    personaId: number;
-    dni: string;
-    nombres: string;
-    apellidoPaterno: string;
-    apellidoMaterno: string;
-    fechaNacimiento: string;
-    sexo: string;
-    estadoCivil: string;
-    nacionalidad: string;
-    direcciones?: {
-      direccionId: number;
-      personaId: number;
-      departamentoId: number;
-      provinciaId: number;
-      distritoId: number;
-      tipoVia: "AVENIDA" | "CALLE" | "JIRON" | "PASAJE" | "OTRO";
-      nombreVia: string;
-      numero: string;
-      dpto?: string | null;
-      interior?: string | null;
-      manzana?: string | null;
-      lote?: string | null;
-      block?: string | null;
-      etapa?: string | null;
-      tipoZona: "URBANA" | "RURAL" | "OTRO";
-      nombreZona: string;
-      referencia?: string | null;
-      refiereEssalud?: boolean;
-    }[];
-  };
+  persona: PersonaData;
   ocupacion?: {
     ocupacionId: number;
     name: string;
@@ -224,10 +200,10 @@ export function TRegistroPage() {
       | undefined;
 
   // Fetch partial worker list for current company
-  const { data: tPersonasRaw, isLoading: isLoadingList } = useQuery<any[]>({
+  const { data: tPersonasRaw, isLoading: isLoadingList } = useQuery<RawTPersona[]>({
     queryKey: ["t-personas-list", companyId, token],
     queryFn: async () => {
-      const res = await Api.get(`/t-persona/company/${companyId}`, {
+      const res = await Api.get<ApiResponse<RawTPersona[]>>(`/t-persona/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data.body || [];
@@ -243,12 +219,12 @@ export function TRegistroPage() {
     queryFn: async () => {
       if (!tPersonasRaw || tPersonasRaw.length === 0) return [];
       const details = await Promise.all(
-        tPersonasRaw.map(async (tp: any) => {
+        tPersonasRaw.map(async (tp: RawTPersona) => {
           try {
-            const res = await Api.get(`/t-persona/details/${tp.tPersonaId}`, {
+            const res = await Api.get<ApiResponse<TPersonaRow>>(`/t-persona/details/${tp.tPersonaId}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            return res.data.body as TPersonaRow;
+            return res.data.body;
           } catch (err) {
             console.error(
               `Error loading details for TPersona ${tp.tPersonaId}:`,
@@ -256,6 +232,51 @@ export function TRegistroPage() {
             );
             return {
               ...tp,
+              categoria: "TRABAJADOR" as const,
+              telefono: "",
+              email: "",
+              periodoInicio: "",
+              fechaInicio: "",
+              periodoFin: null,
+              motivoBaja: null,
+              tipoTrabajador: "EMPLEADO",
+              fechaIngreso: "",
+              regimenLaboral: "D_LEG_728",
+              otroRegimenLaboral: null,
+              ocupacionId: 0,
+              tipoContrato: "PLAZO_INDETERMINADO",
+              otroTipoContrato: null,
+              tipoPago: "EFECTIVO",
+              otroTipoPago: null,
+              periodoIngreso: "MENSUAL",
+              otroPeriodoIngreso: null,
+              entidadId: 0,
+              cuentaBancaria: null,
+              montoRemuneracionInicial: 0,
+              codlocal: "0000",
+              local: null,
+              jornadaLaboral: "MAXIMA",
+              situacionEspecial: null,
+              discapacidad: false,
+              sindicalizado: false,
+              regimenSalud: "ESSALUD_REGULAR",
+              fechaInicioSalud: "",
+              fechaFinSalud: null,
+              regimenPensionario: "SIN_REGIMEN_PENSIONARIO",
+              fechaInicioPensionario: "",
+              fechaFinPensionario: null,
+              CUSPP: null,
+              sctr: false,
+              pension: null,
+              salud: null,
+              fechaInicioSaludPension: null,
+              fechaFinSaludPension: null,
+              situacionEducativaId: 1,
+              quintaCategoriaExonerada: false,
+              evitaDobleImposicion: false,
+              tEmpresaCompanyId: 0,
+              createAt: "",
+              userId: 0,
               persona: {
                 personaId: tp.personaId,
                 dni: "Desconocido",
@@ -266,6 +287,7 @@ export function TRegistroPage() {
                 sexo: "",
                 estadoCivil: "",
                 nacionalidad: "PERUANA",
+                direcciones: [],
               },
               ocupacion: null,
               situacionEducativa: null,

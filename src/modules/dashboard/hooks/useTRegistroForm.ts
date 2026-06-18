@@ -134,9 +134,46 @@ export interface TRegistroSuccessData {
   createAt?: string;
 }
 
-export interface ExtendedFormValues extends PersonaFormType {
+export interface TRegistroFormValues extends PersonaFormType {
   ocupacionNombre?: string;
   situacionEducativaNombre?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  motivoBaja?: string;
+  tipoTrabajador?: string;
+  fechaInicioTipo?: string;
+  regimenLaboral?: string;
+  rdb_descripcion_detalle?: string;
+  categoriaOcupacional?: string;
+  ocupacionId?: string | number;
+  tipoContrato?: string;
+  tipoPago?: string;
+  periodoIngreso?: string;
+  cuenta?: string;
+  montoRemuneracion?: string | number;
+  establecimiento?: string | number;
+  codLocal?: string;
+  localTipo?: string;
+  jornadaLaboral?: string;
+  situacionEspecial?: string;
+  discapacidad?: string;
+  sindicalizado?: string;
+  situacion?: string;
+  regimenSalud?: string;
+  fechaInicioSalud?: string;
+  fechaFinSalud?: string;
+  regimenPensionario?: string;
+  fechaInicioPensionario?: string;
+  fechaFinPensionario?: string;
+  CUSPP?: string;
+  sctr?: string;
+  pension?: string;
+  salud?: string;
+  fechaInicioSaludPension?: string;
+  fechaFinSaludPension?: string;
+  situacionEducativaId?: string | number;
+  quintaCategoriaExonerada?: string;
+  evitaDobleImposicion?: string;
 }
 
 export function useTRegistroForm() {
@@ -186,6 +223,7 @@ export function useTRegistroForm() {
 
   // Sync phone and email when selectedPersona changes
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (selectedPersona) {
       setTelefono(selectedPersona.telefono || "");
       setEmail(selectedPersona.email || "");
@@ -193,10 +231,11 @@ export function useTRegistroForm() {
       setTelefono("");
       setEmail("");
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [selectedPersona]);
 
   // Zod hook-form for registration
-  const methods = useForm<PersonaFormType>({
+  const methods = useForm<TRegistroFormValues>({
     resolver: zodResolver(personaSchema),
     defaultValues: {
       dni: "",
@@ -208,7 +247,6 @@ export function useTRegistroForm() {
       estadoCivil: "",
       nacionalidad: "PERUANA",
       direccion: {
-        personaId: 0,
         departamentoId: 0,
         provinciaId: 0,
         distritoId: 0,
@@ -337,7 +375,10 @@ export function useTRegistroForm() {
   // Create persona mutation
   const { mutate: createPersona, isPending: isCreating } = useMutation({
     mutationFn: async (formData: PersonaFormType) => {
-      const { direccion: { personaId, ...direccionRest }, ...personaRest } = formData;
+      const {
+        direccion: { personaId, ...direccionRest },
+        ...personaRest
+      } = formData;
       const payload = {
         ...personaRest,
         direccion: direccionRest,
@@ -378,7 +419,7 @@ export function useTRegistroForm() {
       onSuccess: (data, variables) => {
         toast.success("T-Registro guardado con éxito");
         if (selectedPersona && activeCompany) {
-          const formValues = methods.getValues() as ExtendedFormValues;
+          const formValues = methods.getValues() as TRegistroFormValues;
           const principalAddress =
             selectedPersona.direcciones &&
             selectedPersona.direcciones.length > 0
@@ -458,22 +499,30 @@ export function useTRegistroForm() {
   );
 
   // Update TPersona mutation
-  const { mutate: updateTPersona, isPending: isUpdatingTPersona } = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: CreateTPersonaInput }) => {
-      const res = await Api.patch(`/t-persona/${id}`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return res.data;
+  const { mutate: updateTPersona, isPending: isUpdatingTPersona } = useMutation(
+    {
+      mutationFn: async ({
+        id,
+        data,
+      }: {
+        id: number;
+        data: CreateTPersonaInput;
+      }) => {
+        const res = await Api.patch(`/t-persona/${id}`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return res.data;
+      },
+      onSuccess: () => {
+        toast.success("T-Registro actualizado con éxito");
+      },
+      onError: () => {
+        toast.error("Error al actualizar el T-Registro");
+      },
     },
-    onSuccess: () => {
-      toast.success("T-Registro actualizado con éxito");
-    },
-    onError: () => {
-      toast.error("Error al actualizar el T-Registro");
-    },
-  });
+  );
 
   const isBlocking = !selectedPersona;
 
