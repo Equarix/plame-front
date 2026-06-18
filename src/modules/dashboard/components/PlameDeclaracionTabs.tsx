@@ -49,6 +49,7 @@ export function PlameDeclaracionTabs({
   >("jornada");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSavingDetalle, setIsSavingDetalle] = useState(false);
+  const [isProcessingGlobal, setIsProcessingGlobal] = useState(false);
 
   // Form states
   const {
@@ -162,6 +163,7 @@ export function PlameDeclaracionTabs({
     sustitutoria: string;
     numeroOrden: string;
   }) => {
+    setIsProcessingGlobal(true);
     try {
       await Api.patch(
         `/plame/${declaracion.plameDeclaracionId}`,
@@ -177,11 +179,14 @@ export function PlameDeclaracionTabs({
       onRefresh();
     } catch (err) {
       toast.error("Error al guardar la información general");
+    } finally {
+      setIsProcessingGlobal(false);
     }
   };
 
   const handleSync = async () => {
     try {
+      setIsProcessingGlobal(true);
       setIsSyncing(true);
       await Api.post(
         "/plame/sync",
@@ -199,6 +204,7 @@ export function PlameDeclaracionTabs({
       toast.error("Error al sincronizar con T-Registro");
     } finally {
       setIsSyncing(false);
+      setIsProcessingGlobal(false);
     }
   };
 
@@ -206,6 +212,7 @@ export function PlameDeclaracionTabs({
     if (!selectedDetalle) return;
 
     try {
+      setIsProcessingGlobal(true);
       setIsSavingDetalle(true);
 
       const payload = {
@@ -229,6 +236,7 @@ export function PlameDeclaracionTabs({
       toast.error("Error al registrar cambios");
     } finally {
       setIsSavingDetalle(false);
+      setIsProcessingGlobal(false);
     }
   };
 
@@ -290,6 +298,7 @@ export function PlameDeclaracionTabs({
   ];
 
   const handleSaveDeuda = async (deudaData: any) => {
+    setIsProcessingGlobal(true);
     try {
       await Api.patch(
         `/plame/${declaracion.plameDeclaracionId}`,
@@ -300,10 +309,13 @@ export function PlameDeclaracionTabs({
       onRefresh();
     } catch (err) {
       toast.error("Error al guardar la deuda");
+    } finally {
+      setIsProcessingGlobal(false);
     }
   };
 
   const handleFinalizeDeclaration = async (deudaData?: any) => {
+    setIsProcessingGlobal(true);
     try {
       const payload = deudaData ? { estado: "Presentado", ...deudaData } : { estado: "Presentado" };
       await Api.patch(
@@ -315,11 +327,13 @@ export function PlameDeclaracionTabs({
       onClose();
     } catch (err) {
       toast.error("Error al finalizar la declaración");
+    } finally {
+      setIsProcessingGlobal(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card overflow-hidden shadow-sm flex flex-col min-h-[500px]">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card overflow-hidden shadow-sm flex flex-col min-h-[500px] relative">
       {/* Tab Selectors */}
       <div className="flex bg-zinc-150/40 dark:bg-zinc-950/40 border-b border-zinc-200/40 dark:border-zinc-850">
         <button
@@ -1142,6 +1156,13 @@ export function PlameDeclaracionTabs({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {isProcessingGlobal && (
+        <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="mt-4 text-sm font-bold text-indigo-700 dark:text-indigo-400 animate-pulse">Procesando...</span>
         </div>
       )}
     </div>

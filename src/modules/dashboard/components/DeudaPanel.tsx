@@ -135,8 +135,10 @@ export function DeudaPanel({ declaracion, companyRuc, companyName, onClose, onSa
   );
   const [banco, setBanco] = useState(declaracion.banco || "");
   const [numeroCheque, setNumeroCheque] = useState(declaracion.numeroCheque || "");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleGeneratePdf = async () => {
+    setIsProcessing(true);
     const loadingToast = toast.loading("Generando constancia PDF...");
     try {
       const payload = {
@@ -176,6 +178,8 @@ export function DeudaPanel({ declaracion, companyRuc, companyName, onClose, onSa
     } catch (err) {
       console.error(err);
       toast.error("Error al procesar el PDF", { id: loadingToast });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -187,7 +191,7 @@ export function DeudaPanel({ declaracion, companyRuc, companyName, onClose, onSa
   const trRow = "border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
       <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50 border-b border-zinc-200/50 pb-2">
         Determinación de la Deuda
       </h3>
@@ -493,7 +497,14 @@ export function DeudaPanel({ declaracion, companyRuc, companyName, onClose, onSa
           </button>
           <button
             type="button"
-            onClick={() => onSaveDeuda({ ...campos, totalNetoAPagar: importeTotalAPagar, formaPago, banco, numeroCheque })}
+            onClick={async () => {
+              setIsProcessing(true);
+              try {
+                await onSaveDeuda({ ...campos, totalNetoAPagar: importeTotalAPagar, formaPago, banco, numeroCheque });
+              } finally {
+                setIsProcessing(false);
+              }
+            }}
             className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 dark:bg-zinc-700 text-white rounded-bento-control text-xs font-bold hover:opacity-90 transition-all"
           >
             <FiSave className="text-sm" /> Guardar
@@ -518,6 +529,13 @@ export function DeudaPanel({ declaracion, companyRuc, companyName, onClose, onSa
           <FiCheckCircle className="text-sm" /> Presentar Declaración
         </button>
       </div>
+
+      {isProcessing && (
+        <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="mt-4 text-sm font-bold text-indigo-700 dark:text-indigo-400 animate-pulse">Procesando...</span>
+        </div>
+      )}
     </div>
   );
 }
