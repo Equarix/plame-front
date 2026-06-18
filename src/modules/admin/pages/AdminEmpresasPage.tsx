@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { AdminLayout } from "../components/AdminLayout";
 import { AdminEmpresaModal } from "../components/AdminEmpresaModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { type EmpresaFormType } from "../schemas/empresa.schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -24,6 +25,7 @@ export function AdminEmpresasPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEmpresa, setSelectedEmpresa] = useState<EmpresaData | undefined>(undefined);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; idToDelete: number | null }>({ isOpen: false, idToDelete: null });
 
   // 1. Fetch Companies List using React Query
   const {
@@ -131,9 +133,7 @@ export function AdminEmpresasPage() {
   };
 
   const handleDeleteEmpresa = (companyId: number) => {
-    if (window.confirm("¿Está seguro de eliminar esta empresa?")) {
-      deleteEmpresa(companyId);
-    }
+    setConfirmModal({ isOpen: true, idToDelete: companyId });
   };
 
   return (
@@ -241,6 +241,18 @@ export function AdminEmpresasPage() {
         onSubmit={handleModalSubmit}
         empresaToEdit={selectedEmpresa}
         isLoading={isCreating || isEditing || isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        message="¿Está seguro de eliminar esta empresa?"
+        onConfirm={() => {
+          if (confirmModal.idToDelete !== null) {
+            deleteEmpresa(confirmModal.idToDelete);
+            setConfirmModal({ isOpen: false, idToDelete: null });
+          }
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, idToDelete: null })}
       />
     </AdminLayout>
   );

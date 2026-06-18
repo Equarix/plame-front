@@ -4,6 +4,8 @@ export interface UserData {
   name: string;
   lastName: string;
   role: string;
+  status?: boolean;
+  estado?: boolean;
 }
 
 export interface Metadata {

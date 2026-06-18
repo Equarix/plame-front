@@ -67,26 +67,13 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Tile 3: Security Statement Card (Dusty Blue Background) */}
-            <div className="bg-bento-secondary dark:bg-zinc-900 border border-zinc-900/5 dark:border-zinc-800 rounded-bento-card p-6 flex flex-col justify-between shadow-md h-full min-h-[140px] text-zinc-950 dark:text-zinc-50">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-900/70 dark:text-zinc-400">
-                Seguridad
-              </span>
-              <div>
-                <h3 className="text-lg font-bold tracking-tight mb-1 text-zinc-950 dark:text-white">
-                  Conexión Encriptada
-                </h3>
-                <p className="text-xs text-zinc-900/80 dark:text-zinc-300 leading-relaxed">
-                  Sus datos personales y declaraciones fiscales están completamente protegidos mediante cifrado SSL de extremo a extremo.
-                </p>
-              </div>
-            </div>
+
 
           </div>
 
           {/* Bottom Row Bento Tiles */}
-          {/* Tile 4: Informative Banner (Spans 2 columns) */}
-          <div className="md:col-span-2 bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 flex items-start gap-4 shadow-sm">
+          {/* Tile 4: Informative Banner (Spans 3 columns) */}
+          <div className="md:col-span-3 bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 flex items-start gap-4 shadow-sm">
             <div className="p-3 bg-white dark:bg-zinc-800 rounded-bento-control text-zinc-600 dark:text-zinc-300 border border-zinc-200/50 dark:border-zinc-700/50 shadow-inner shrink-0 hidden sm:block">
               <FaBookOpen className="text-lg" />
             </div>
@@ -96,21 +83,6 @@ export function LoginPage() {
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
                 El sistema sincroniza automáticamente los datos de alta y baja del T-Registro para facilitar la declaración mensual de su personal y aportes.
-              </p>
-            </div>
-          </div>
-
-          {/* Tile 5: Soporte / Mesa de Ayuda (1 Column) */}
-          <div className="bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 flex items-center gap-3.5 shadow-sm">
-            <div className="p-3 bg-zinc-900 dark:bg-zinc-800 rounded-bento-control text-white dark:text-zinc-200 shrink-0">
-              <FaPhoneAlt className="text-sm" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-50">
-                ¿Necesita ayuda?
-              </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-semibold">
-                Llámenos al (01) 315-0730
               </p>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { AdminLayout } from "../components/AdminLayout";
 import { AdminSituacionAcademicaModal } from "../components/AdminSituacionAcademicaModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { type SituacionAcademicaFormType } from "../schemas/situacion-academica.schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -24,6 +25,7 @@ export function AdminSituacionesAcademicasPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSituacion, setSelectedSituacion] = useState<SituacionAcademicaData | undefined>(undefined);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; idToDelete: number | null }>({ isOpen: false, idToDelete: null });
 
   // 1. Fetch Academic Situations List using React Query
   const {
@@ -137,9 +139,7 @@ export function AdminSituacionesAcademicasPage() {
   };
 
   const handleDeleteSituacion = (situacionEducativaId: number) => {
-    if (window.confirm("¿Está seguro de eliminar esta situación académica?")) {
-      deleteSituacion(situacionEducativaId);
-    }
+    setConfirmModal({ isOpen: true, idToDelete: situacionEducativaId });
   };
 
   return (
@@ -255,6 +255,18 @@ export function AdminSituacionesAcademicasPage() {
         onSubmit={handleModalSubmit}
         situacionToEdit={selectedSituacion}
         isLoading={isCreating || isEditing || isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        message="¿Está seguro de eliminar esta situación académica?"
+        onConfirm={() => {
+          if (confirmModal.idToDelete !== null) {
+            deleteSituacion(confirmModal.idToDelete);
+            setConfirmModal({ isOpen: false, idToDelete: null });
+          }
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, idToDelete: null })}
       />
     </AdminLayout>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { AdminLayout } from "../components/AdminLayout";
 import { AdminUserModal } from "../components/AdminUserModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { type UserFormType } from "../schemas/user.schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -24,6 +25,7 @@ export function AdminUsersPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | undefined>(undefined);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; idToDelete: number | null }>({ isOpen: false, idToDelete: null });
 
   // 1. Fetch Users List using React Query
   const {
@@ -134,9 +136,7 @@ export function AdminUsersPage() {
   };
 
   const handleDeleteUser = (id: number) => {
-    if (window.confirm("¿Está seguro de marcar a este usuario como inactivo?")) {
-      deleteUser(id);
-    }
+    setConfirmModal({ isOpen: true, idToDelete: id });
   };
 
   return (
@@ -190,6 +190,7 @@ export function AdminUsersPage() {
                   <th className="px-6 py-3.5">Nombre Completo</th>
                   <th className="px-6 py-3.5">Nombre de Usuario</th>
                   <th className="px-6 py-3.5">Rol</th>
+                  <th className="px-6 py-3.5">Estado</th>
                   <th className="px-6 py-3.5 text-right">Acciones</th>
                 </tr>
               </thead>
@@ -214,6 +215,17 @@ export function AdminUsersPage() {
                       >
                         {usr.role}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {(usr.status !== false && usr.estado !== false) ? (
+                        <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-md bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 uppercase tracking-wider">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400 uppercase tracking-wider">
+                          Inactivo
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end items-center gap-2">
@@ -248,6 +260,18 @@ export function AdminUsersPage() {
         onSubmit={handleModalSubmit}
         userToEdit={selectedUser}
         isLoading={isCreating || isEditing || isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        message="¿Está seguro de marcar a este usuario como inactivo?"
+        onConfirm={() => {
+          if (confirmModal.idToDelete !== null) {
+            deleteUser(confirmModal.idToDelete);
+            setConfirmModal({ isOpen: false, idToDelete: null });
+          }
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, idToDelete: null })}
       />
     </AdminLayout>
   );

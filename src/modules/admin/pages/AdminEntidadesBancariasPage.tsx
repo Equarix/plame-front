@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { AdminLayout } from "../components/AdminLayout";
 import { AdminEntidadBancariaModal } from "../components/AdminEntidadBancariaModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { type EntidadBancariaFormType } from "../schemas/entidad-bancaria.schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -24,6 +25,7 @@ export function AdminEntidadesBancariasPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEntidad, setSelectedEntidad] = useState<EntidadBancariaData | undefined>(undefined);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; idToDelete: number | null }>({ isOpen: false, idToDelete: null });
 
   // 1. Fetch Bank Entities List using React Query
   const {
@@ -128,9 +130,7 @@ export function AdminEntidadesBancariasPage() {
   };
 
   const handleDeleteEntidad = (entidadId: number) => {
-    if (window.confirm("¿Está seguro de eliminar esta entidad bancaria?")) {
-      deleteEntidad(entidadId);
-    }
+    setConfirmModal({ isOpen: true, idToDelete: entidadId });
   };
 
   return (
@@ -234,6 +234,18 @@ export function AdminEntidadesBancariasPage() {
         onSubmit={handleModalSubmit}
         entidadToEdit={selectedEntidad}
         isLoading={isCreating || isEditing || isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        message="¿Está seguro de eliminar esta entidad bancaria?"
+        onConfirm={() => {
+          if (confirmModal.idToDelete !== null) {
+            deleteEntidad(confirmModal.idToDelete);
+            setConfirmModal({ isOpen: false, idToDelete: null });
+          }
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, idToDelete: null })}
       />
     </AdminLayout>
   );

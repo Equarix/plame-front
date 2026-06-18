@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/context/AuthContext";
 import { AdminLayout } from "../components/AdminLayout";
 import { AdminPersonaModal } from "../components/AdminPersonaModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { type PersonaFormType } from "../schemas/persona.schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
@@ -25,6 +26,7 @@ export function AdminPersonasPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<PersonaData | undefined>(undefined);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; idToDelete: number | null }>({ isOpen: false, idToDelete: null });
 
   // 1. Fetch Personas List using React Query
   const {
@@ -133,9 +135,7 @@ export function AdminPersonasPage() {
   };
 
   const handleDeletePersona = (personaId: number) => {
-    if (window.confirm("¿Está seguro de eliminar esta persona del T-Registro?")) {
-      deletePersona(personaId);
-    }
+    setConfirmModal({ isOpen: true, idToDelete: personaId });
   };
 
   return (
@@ -280,6 +280,18 @@ export function AdminPersonasPage() {
         onSubmit={handleModalSubmit}
         personaToEdit={selectedPersona}
         isLoading={isCreating || isEditing || isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        message="¿Está seguro de eliminar esta persona del T-Registro?"
+        onConfirm={() => {
+          if (confirmModal.idToDelete !== null) {
+            deletePersona(confirmModal.idToDelete);
+            setConfirmModal({ isOpen: false, idToDelete: null });
+          }
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, idToDelete: null })}
       />
     </AdminLayout>
   );
