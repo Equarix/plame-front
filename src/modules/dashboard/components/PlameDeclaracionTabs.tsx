@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   FiCheckCircle,
@@ -54,9 +54,9 @@ export function PlameDeclaracionTabs({
 
   // Form states
   const {
-    register: registerGeneral,
     handleSubmit: handleGeneralSubmit,
     setValue: setGeneralValue,
+    control: controlGeneral,
   } = useForm({
     defaultValues: {
       sustitutoria: declaracion.sustitutoria ? "true" : "false",
@@ -65,10 +65,10 @@ export function PlameDeclaracionTabs({
   });
 
   const {
-    register: registerDetalle,
     handleSubmit: handleDetalleSubmit,
     setValue: setDetalleValue,
     watch: watchDetalle,
+    control: controlDetalle,
   } = useForm({
     defaultValues: {
       diasLaborados: 30,
@@ -568,26 +568,34 @@ export function PlameDeclaracionTabs({
                   <label className="text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-2">
                     ¿Es declaración sustitutoria o rectificatoria?
                   </label>
-                  <div className="flex gap-4 items-center h-11">
-                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                      <input
-                        type="radio"
-                        value="true"
-                        {...registerGeneral("sustitutoria")}
-                        className="text-bento-secondary"
-                      />{" "}
-                      Sí
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                      <input
-                        type="radio"
-                        value="false"
-                        {...registerGeneral("sustitutoria")}
-                        className="text-bento-secondary"
-                      />{" "}
-                      No
-                    </label>
-                  </div>
+                  <Controller
+                    name="sustitutoria"
+                    control={controlGeneral}
+                    render={({ field }) => (
+                      <div className="flex gap-4 items-center h-11">
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input
+                            type="radio"
+                            value="true"
+                            checked={field.value === "true"}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="text-bento-secondary"
+                          />{" "}
+                          Sí
+                        </label>
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input
+                            type="radio"
+                            value="false"
+                            checked={field.value === "false"}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="text-bento-secondary"
+                          />{" "}
+                          No
+                        </label>
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -810,17 +818,29 @@ export function PlameDeclaracionTabs({
                           Días de la Jornada
                         </h5>
                         <div className="grid grid-cols-3 gap-4 items-end">
-                          <FormInput
-                            label="Laborados"
-                            type="number"
-                            {...registerDetalle("diasLaborados")}
+                          <Controller
+                            name="diasLaborados"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Laborados"
+                                type="number"
+                              />
+                            )}
                           />
                           <div className="relative">
-                            <FormInput
-                              label="Subsidiados"
-                              type="number"
-                              {...registerDetalle("diasSubsidiados")}
-                              readOnly
+                            <Controller
+                              name="diasSubsidiados"
+                              control={controlDetalle}
+                              render={({ field }) => (
+                                <FormInput
+                                  {...field}
+                                  label="Subsidiados"
+                                  type="number"
+                                  readOnly
+                                />
+                              )}
                             />
                             <button
                               type="button"
@@ -830,10 +850,16 @@ export function PlameDeclaracionTabs({
                               Editar
                             </button>
                           </div>
-                          <FormInput
-                            label="No Laborados"
-                            type="number"
-                            {...registerDetalle("diasNoLaborados")}
+                          <Controller
+                            name="diasNoLaborados"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="No Laborados"
+                                type="number"
+                              />
+                            )}
                           />
                         </div>
                       </div>
@@ -843,15 +869,27 @@ export function PlameDeclaracionTabs({
                           Horas Laboradas
                         </h5>
                         <div className="grid grid-cols-2 gap-4">
-                          <FormInput
-                            label="Ordinarias (HHH:MM)"
-                            placeholder="240:00"
-                            {...registerDetalle("horasOrdinarias")}
+                          <Controller
+                            name="horasOrdinarias"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Ordinarias (HHH:MM)"
+                                placeholder="240:00"
+                              />
+                            )}
                           />
-                          <FormInput
-                            label="Sobretiempo (HHH:MM)"
-                            placeholder="00:00"
-                            {...registerDetalle("horasSobretiempo")}
+                          <Controller
+                            name="horasSobretiempo"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Sobretiempo (HHH:MM)"
+                                placeholder="00:00"
+                              />
+                            )}
                           />
                         </div>
                       </div>
