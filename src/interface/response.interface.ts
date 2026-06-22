@@ -41,6 +41,10 @@ export interface EmpresaData {
   status: boolean;
   createdAt?: string;
   updatedAt?: string;
+  tempresaConceptos?: {
+    conceptoId: number;
+    concepto: ConceptoData;
+  }[];
 }
 
 export interface EntidadBancariaData {

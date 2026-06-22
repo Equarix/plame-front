@@ -14,6 +14,8 @@ import {
 import { Api } from "@/lib/api";
 import { FormInput } from "@/components/forms/FormInput";
 import { DeudaPanel } from "./DeudaPanel";
+import { useQuery } from "@tanstack/react-query";
+import type { ApiResponse } from "@/interface/response.interface";
 import type {
   PlameConceptAportacionTrabajador,
   PlameConceptIngreso,
@@ -23,6 +25,33 @@ import type {
   PlameDeclaracion,
   PlameEmpresa,
 } from "../types/plame.types";
+
+interface ConceptoDetalle {
+  conceptoId: number;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  subTipo?: string | null;
+  porcentaje?: number | null;
+  estado: boolean;
+  createdAt: string;
+}
+
+interface EmpresaConcepto {
+  id: number;
+  tEmpresaCompanyId: number;
+  conceptoId: number;
+  concepto: ConceptoDetalle;
+}
+
+interface EmpresaConceptosRoot {
+  companyId: number;
+  name: string;
+  ruc: string;
+  address: string;
+  status: boolean;
+  conceptos: EmpresaConcepto[];
+}
 
 interface PlameDeclaracionTabsProps {
   declaracion: PlameDeclaracion;
@@ -39,6 +68,19 @@ export function PlameDeclaracionTabs({
   onClose,
   onRefresh,
 }: PlameDeclaracionTabsProps) {
+  const { data: companyConceptosResponse } = useQuery<ApiResponse<EmpresaConceptosRoot>>({
+    queryKey: ["company-conceptos", activeCompany.companyId, token],
+    queryFn: async () => {
+      const res = await Api.get(`/t-empresa/public/t-conceptos/${activeCompany.companyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!activeCompany.companyId && !!token,
+  });
+
+  const companyConceptos = companyConceptosResponse?.body?.conceptos || [];
+
   const [activeMainTab, setActiveMainTab] = useState<
     "general" | "detalle" | "deuda"
   >("general");
@@ -103,81 +145,90 @@ export function PlameDeclaracionTabs({
 
       // ── INGRESOS MERGE ──
       const dbIngresos = selectedDetalle.ingresos || [];
-      const defaultIngresos = [
-        {
-          code: "0105",
-          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0106",
-          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0107",
-          name: "TRABAJO EN FERIADO O DÍA DESCANSO",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0118",
-          name: "REMUNERACIÓN VACACIONAL",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0121",
-          name: "REMUNERACIÓN O JORNAL BÁSICO",
-          devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
-          pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
-        },
-        {
-          code: "0122",
-          name: "REMUNERACIÓN PERMANENTE",
-          devengado: 0,
-          pagado: 0,
-        },
-        { code: "0201", name: "ASIGNACIÓN FAMILIAR", devengado: 0, pagado: 0 },
-        {
-          code: "0306",
-          name: "BONIFICACIONES REGULARES",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0311",
-          name: "BONIFICACION UNIFICADA DE CONSTRUCC",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0406",
-          name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0407",
-          name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0504",
-          name: "INDEMNIZACIÓN VACACIONES NO GOZADAS",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0904",
-          name: "COMPENSACIÓN TIEMPO DE SERVICIOS",
-          devengado: 0,
-          pagado: 0,
-        },
-      ];
+      const defaultIngresos = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "INGRESO")
+            .map(c => ({
+              code: c.concepto.codigo,
+              name: c.concepto.nombre,
+              devengado: c.concepto.codigo === "0121" ? (selectedDetalle.tPersona.montoRemuneracionInicial || 0) : 0,
+              pagado: c.concepto.codigo === "0121" ? (selectedDetalle.tPersona.montoRemuneracionInicial || 0) : 0,
+            }))
+        : [
+            {
+              code: "0105",
+              name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0106",
+              name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0107",
+              name: "TRABAJO EN FERIADO O DÍA DESCANSO",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0118",
+              name: "REMUNERACIÓN VACACIONAL",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0121",
+              name: "REMUNERACIÓN O JORNAL BÁSICO",
+              devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+              pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+            },
+            {
+              code: "0122",
+              name: "REMUNERACIÓN PERMANENTE",
+              devengado: 0,
+              pagado: 0,
+            },
+            { code: "0201", name: "ASIGNACIÓN FAMILIAR", devengado: 0, pagado: 0 },
+            {
+              code: "0306",
+              name: "BONIFICACIONES REGULARES",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0311",
+              name: "BONIFICACION UNIFICADA DE CONSTRUCC",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0406",
+              name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0407",
+              name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0504",
+              name: "INDEMNIZACIÓN VACACIONES NO GOZADAS",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0904",
+              name: "COMPENSACIÓN TIEMPO DE SERVICIOS",
+              devengado: 0,
+              pagado: 0,
+            },
+          ];
       const mergedIngresos = defaultIngresos.map(
         (def) => dbIngresos.find((i) => i.code === def.code) || def,
       );
@@ -189,13 +240,21 @@ export function PlameDeclaracionTabs({
 
       // ── DESCUENTOS MERGE ──
       const dbDescuentos = selectedDetalle.descuentos || [];
-      const defaultDescuentos = [
-        { code: "0701", name: "ADELANTO", monto: 0 },
-        { code: "0702", name: "CUOTA SINDICAL", monto: 0 },
-        { code: "0703", name: "DESCUENTO POR TARDANZAS", monto: 0 },
-        { code: "0704", name: "DESCUENTO POR INASISTENCIAS", monto: 0 },
-        { code: "0706", name: "OTROS DESC NO DEDUC DE BASE IMPONIB", monto: 0 },
-      ];
+      const defaultDescuentos = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "DESCUENTO")
+            .map(c => ({
+              code: c.concepto.codigo,
+              name: c.concepto.nombre,
+              monto: 0,
+            }))
+        : [
+            { code: "0701", name: "ADELANTO", monto: 0 },
+            { code: "0702", name: "CUOTA SINDICAL", monto: 0 },
+            { code: "0703", name: "DESCUENTO POR TARDANZAS", monto: 0 },
+            { code: "0704", name: "DESCUENTO POR INASISTENCIAS", monto: 0 },
+            { code: "0706", name: "OTROS DESC NO DEDUC DE BASE IMPONIB", monto: 0 },
+          ];
       const mergedDescuentos = defaultDescuentos.map(
         (def) => dbDescuentos.find((d) => d.code === def.code) || def,
       );
@@ -208,30 +267,44 @@ export function PlameDeclaracionTabs({
       // ── APORTACIONES TRABAJADOR MERGE ──
       const dbTributos = selectedDetalle.tributos || [];
       const dbAportacionesTrab = dbTributos.filter((t) =>
-        t.code.startsWith("06"),
+        t.code.startsWith("06") || (companyConceptos.length > 0 && companyConceptos.some(cc => cc.concepto.codigo === t.code && cc.concepto.subTipo === "Trabajador"))
       );
       const sumDevengado = mergedIngresos.reduce((s, i) => s + i.devengado, 0);
-      const defaultAportacionesTrab = [
-        { code: "0602", name: "CONAFOVICER", base: 0, monto: 0 },
-        {
-          code: "0605",
-          name: "RENTA QUINTA CATEGORÍA RETENCIONES",
-          base: sumDevengado,
-          monto: 0,
-        },
-        {
-          code: "0607",
-          name: "SISTEMA NAC. DE PENSIONES DL 19990",
-          base: sumDevengado,
-          monto: 0,
-        },
-        {
-          code: "0611",
-          name: "OTROS APORTACIONES TRAB./PENSIONIS.",
-          base: 0,
-          monto: 0,
-        },
-      ];
+      const defaultAportacionesTrab = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "TRIBUTO" && c.concepto.subTipo === "Trabajador")
+            .map(c => {
+              const pct = c.concepto.porcentaje || 0;
+              const base = pct > 0 ? sumDevengado : 0;
+              const monto = pct > 0 ? Number((base * (pct / 100)).toFixed(2)) : 0;
+              return {
+                code: c.concepto.codigo,
+                name: c.concepto.nombre,
+                base,
+                monto,
+              };
+            })
+        : [
+            { code: "0602", name: "CONAFOVICER", base: 0, monto: 0 },
+            {
+              code: "0605",
+              name: "RENTA QUINTA CATEGORÍA RETENCIONES",
+              base: sumDevengado,
+              monto: 0,
+            },
+            {
+              code: "0607",
+              name: "SISTEMA NAC. DE PENSIONES DL 19990",
+              base: sumDevengado,
+              monto: 0,
+            },
+            {
+              code: "0611",
+              name: "OTROS APORTACIONES TRAB./PENSIONIS.",
+              base: 0,
+              monto: 0,
+            },
+          ];
       const mergedAportacionesTrab = defaultAportacionesTrab.map((def) => {
         const found = dbAportacionesTrab.find((a) => a.code === def.code);
         return found
@@ -257,7 +330,7 @@ export function PlameDeclaracionTabs({
 
       setTributos(dbTributos);
     }
-  }, [selectedDetalle, setDetalleValue]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDetalle, setDetalleValue, companyConceptos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSaveGeneral = async (data: {
     sustitutoria: string;
@@ -373,27 +446,42 @@ export function PlameDeclaracionTabs({
   );
   const totalDescuentos = descuentos.reduce((sum, item) => sum + item.monto, 0);
 
-  // Recalculated tax base
-  const essaludBase =
-    totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado;
-  const essaludMonto = Number((essaludBase * 0.09).toFixed(2));
+  // Recalculated tax base and finalTributos based on company concepts
+  const finalTributos = companyConceptos.length > 0
+    ? companyConceptos
+        .filter(c => c.concepto.tipo === "TRIBUTO" && c.concepto.subTipo === "Empleador")
+        .map(c => {
+          const isEssalud = c.concepto.codigo === "0804";
+          const base = isEssalud
+            ? (totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado)
+            : totalIngresosDevengado;
+          const pct = c.concepto.porcentaje || 0;
+          const monto = pct > 0 ? Number((base * (pct / 100)).toFixed(2)) : 0;
+          return {
+            code: c.concepto.codigo,
+            name: c.concepto.nombre,
+            base: pct > 0 ? base : 0,
+            monto,
+          };
+        })
+    : [
+        { code: "0801", name: "SPP - APORTACIÓN VOLUNTARIA", base: 0, monto: 0 },
+        { code: "0803", name: "PÓLIZA DE SEGURO - D. LEG. 688", base: 0, monto: 0 },
+        {
+          code: "0804",
+          name: "ESSALUD(REGULAR CBSSP AGRAR/AC)TRAB",
+          base: totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado,
+          monto: Number(((totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado) * 0.09).toFixed(2)),
+        },
+        {
+          code: "0809",
+          name: "OTRAS APORTACIONES CARGO EMPLEADOR",
+          base: 0,
+          monto: 0,
+        },
+      ];
 
-  const finalTributos = [
-    { code: "0801", name: "SPP - APORTACIÓN VOLUNTARIA", base: 0, monto: 0 },
-    { code: "0803", name: "PÓLIZA DE SEGURO - D. LEG. 688", base: 0, monto: 0 },
-    {
-      code: "0804",
-      name: "ESSALUD(REGULAR CBSSP AGRAR/AC)TRAB",
-      base: essaludBase,
-      monto: essaludMonto,
-    },
-    {
-      code: "0809",
-      name: "OTRAS APORTACIONES CARGO EMPLEADOR",
-      base: 0,
-      monto: 0,
-    },
-  ];
+  const essaludMonto = finalTributos.find(t => t.code === "0804")?.monto || 0;
 
   const handleSaveDeuda = async (deudaData: any) => {
     setIsProcessingGlobal(true);

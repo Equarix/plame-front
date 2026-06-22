@@ -21,6 +21,7 @@ import {
 export function AdminConceptosPage() {
   const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"TODOS" | "INGRESO" | "DESCUENTO" | "TRIBUTO">("TODOS");
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -50,12 +51,13 @@ export function AdminConceptosPage() {
 
   const conceptosList = conceptosApiResponse?.body || [];
 
-  // Filter concepts based on search query
+  // Filter concepts based on search query and active tab
   const filteredConceptos = conceptosList.filter((con) => {
-    return (
+    const matchesSearch =
       con.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      con.codigo.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      con.codigo.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === "TODOS" || con.tipo === activeTab;
+    return matchesSearch && matchesTab;
   });
 
   // 2. Create Concept Mutation
@@ -179,7 +181,7 @@ export function AdminConceptosPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar por código o nombre..."
-                className="block w-full sm:w-64 text-xs bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-888 rounded-bento-control text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-bento-secondary/20 focus:border-bento-secondary dark:focus:border-bento-secondary/50 h-9 pl-9 pr-3"
+                className="block w-full sm:w-64 text-xs bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-888 rounded-bento-control text-zinc-950 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-bento-secondary/20 focus:border-bento-secondary dark:focus:border-bento-secondary/50 h-9 pl-9 pr-3"
               />
             </div>
             <button
@@ -192,6 +194,29 @@ export function AdminConceptosPage() {
           </div>
         </div>
 
+        {/* Tabs Bar */}
+        <div className="flex border-b border-zinc-200/30 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-950/20 px-6 py-2.5 gap-2 overflow-x-auto">
+          {(["TODOS", "INGRESO", "DESCUENTO", "TRIBUTO"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-xs font-bold rounded-bento-control transition-all cursor-pointer ${
+                activeTab === tab
+                  ? "bg-bento-secondary text-zinc-950 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-850"
+              }`}
+            >
+              {tab === "TODOS"
+                ? "Todos"
+                : tab === "INGRESO"
+                  ? "Ingresos"
+                  : tab === "DESCUENTO"
+                    ? "Descuentos"
+                    : "Tributos"}
+            </button>
+          ))}
+        </div>
+
         {/* Table */}
         <div className="overflow-x-auto">
           {isLoadingConceptos ? (
@@ -200,7 +225,9 @@ export function AdminConceptosPage() {
             </div>
           ) : filteredConceptos.length === 0 ? (
             <div className="p-12 text-center text-xs text-zinc-400 dark:text-zinc-500">
-              {searchQuery ? "No se encontraron conceptos coincidentes." : "No hay conceptos registrados."}
+              {searchQuery || activeTab !== "TODOS"
+                ? "No se encontraron conceptos coincidentes con los filtros seleccionados."
+                : "No hay conceptos registrados."}
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
