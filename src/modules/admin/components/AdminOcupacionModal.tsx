@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ocupacionSchema,
@@ -29,20 +29,16 @@ export function AdminOcupacionModal({
   const isEditing = !!ocupacionToEdit;
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
-    watch,
+    control,
   } = useForm<OcupacionFormType>({
     resolver: zodResolver(ocupacionSchema),
     defaultValues: {
       name: "",
     },
   });
-
-  console.log({ errors });
-  console.log({ watch: watch() });
 
   useEffect(() => {
     if (isOpen) {
@@ -56,7 +52,7 @@ export function AdminOcupacionModal({
         });
       }
     }
-  }, [isOpen, ocupacionToEdit]);
+  }, [isOpen, ocupacionToEdit, reset]);
 
   if (!isOpen) return null;
 
@@ -94,12 +90,18 @@ export function AdminOcupacionModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            label="Nombre de la Ocupación"
-            placeholder="Administrador de Redes"
-            disabled={isLoading}
-            {...register("name")}
-            error={errors.name?.message}
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                {...field}
+                label="Nombre de la Ocupación"
+                placeholder="Administrador de Redes"
+                disabled={isLoading}
+                error={errors.name?.message}
+              />
+            )}
           />
 
           {/* Action buttons */}

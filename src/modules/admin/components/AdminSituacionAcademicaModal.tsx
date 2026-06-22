@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   situacionAcademicaSchema,
@@ -29,10 +29,10 @@ export function AdminSituacionAcademicaModal({
   const isEditing = !!situacionToEdit;
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    control,
   } = useForm<SituacionAcademicaFormType>({
     resolver: zodResolver(situacionAcademicaSchema),
     defaultValues: {
@@ -56,7 +56,7 @@ export function AdminSituacionAcademicaModal({
         });
       }
     }
-  }, [isOpen, situacionToEdit]);
+  }, [isOpen, situacionToEdit, reset]);
 
   if (!isOpen) return null;
 
@@ -96,30 +96,43 @@ export function AdminSituacionAcademicaModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            label="Nombre de la Situación Académica"
-            placeholder="Educación Superior Completa"
-            disabled={isLoading}
-            {...register("nombre")}
-            error={errors.nombre?.message}
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                {...field}
+                label="Nombre de la Situación Académica"
+                placeholder="Educación Superior Completa"
+                disabled={isLoading}
+                error={errors.nombre?.message}
+              />
+            )}
           />
 
           {/* Requires studies concluidos checkbox */}
-          <div className="flex items-center gap-3 bg-zinc-55/50 dark:bg-zinc-850/30 border border-zinc-200/40 dark:border-zinc-800/40 rounded-bento-control p-4 mt-2">
-            <input
-              type="checkbox"
-              id="requiereEstudios"
-              disabled={isLoading}
-              {...register("requiereEstudios")}
-              className="w-4 h-4 rounded text-bento-secondary focus:ring-bento-secondary/20 border-zinc-300 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/50 accent-bento-secondary"
-            />
-            <label
-              htmlFor="requiereEstudios"
-              className="text-xs font-semibold text-bento-text/80 dark:text-bento-text/90 select-none cursor-pointer"
-            >
-              Requiere registrar relación de estudios concluidos
-            </label>
-          </div>
+          <Controller
+            name="requiereEstudios"
+            control={control}
+            render={({ field }) => (
+              <div className="flex items-center gap-3 bg-zinc-55/50 dark:bg-zinc-850/30 border border-zinc-200/40 dark:border-zinc-800/40 rounded-bento-control p-4 mt-2">
+                <input
+                  type="checkbox"
+                  id="requiereEstudios"
+                  disabled={isLoading}
+                  checked={!!field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  className="w-4 h-4 rounded text-bento-secondary focus:ring-bento-secondary/20 border-zinc-300 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/50 accent-bento-secondary"
+                />
+                <label
+                  htmlFor="requiereEstudios"
+                  className="text-xs font-semibold text-bento-text/80 dark:text-bento-text/90 select-none cursor-pointer"
+                >
+                  Requiere registrar relación de estudios concluidos
+                </label>
+              </div>
+            )}
+          />
           {errors.requiereEstudios && (
             <p className="mt-1.5 text-xs text-bento-danger font-medium">
               {errors.requiereEstudios.message}

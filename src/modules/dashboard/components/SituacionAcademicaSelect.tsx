@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext, useWatch, Controller } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
@@ -22,8 +22,6 @@ export function SituacionAcademicaSelect({
 }: SituacionAcademicaSelectProps) {
   const { token } = useAuth();
   const {
-    register,
-    watch,
     formState: { errors },
     control,
   } = useFormContext();
@@ -79,26 +77,34 @@ export function SituacionAcademicaSelect({
                 </span>
               </div>
             ) : (
-              <select
-                {...register("situacionEducativaId", { valueAsNumber: true })}
-                className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 pl-3.5 pr-9 h-11 focus:outline-none focus:ring-2 transition-all duration-200 appearance-none ${
-                  errors.situacionEducativaId
-                    ? "border-bento-danger focus:ring-bento-danger/20"
-                    : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
-                }`}
-              >
-                <option value="">
-                  -- Seleccione la situación educativa --
-                </option>
-                {situaciones.map((s) => (
-                  <option
-                    key={s.situacionEducativaId}
-                    value={s.situacionEducativaId}
+              <Controller
+                name="situacionEducativaId"
+                control={control}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                    className={`block w-full text-sm bg-white/70 dark:bg-zinc-900/50 border rounded-bento-control text-zinc-900 dark:text-zinc-100 pl-3.5 pr-9 h-11 focus:outline-none focus:ring-2 transition-all duration-200 appearance-none ${
+                      errors.situacionEducativaId
+                        ? "border-bento-danger focus:ring-bento-danger/20"
+                        : "border-zinc-200 dark:border-zinc-800 focus:ring-bento-secondary/20 focus:border-bento-secondary"
+                    }`}
                   >
-                    {s.nombre}
-                  </option>
-                ))}
-              </select>
+                    <option value="">
+                      -- Seleccione la situación educativa --
+                    </option>
+                    {situaciones.map((s) => (
+                      <option
+                        key={s.situacionEducativaId}
+                        value={s.situacionEducativaId}
+                      >
+                        {s.nombre}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
             )}
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
