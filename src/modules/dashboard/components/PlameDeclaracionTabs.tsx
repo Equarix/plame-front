@@ -9,6 +9,7 @@ import {
   FiInfo,
   FiTrash2,
   FiPlus,
+  FiFileText,
 } from "react-icons/fi";
 import { Api } from "@/lib/api";
 import { FormInput } from "@/components/forms/FormInput";
@@ -427,6 +428,68 @@ export function PlameDeclaracionTabs({
     }
   };
 
+  const handleDownloadBoleta = async (det: PlameDetalle) => {
+    const loadingToast = toast.loading(
+      `Generando boleta R08 para ${det.tPersona.persona.nombres}...`,
+    );
+    try {
+      const dbTributos = det.tributos || [];
+      const aportacionesTrabajador = dbTributos.filter((t) =>
+        t.code.startsWith("06"),
+      );
+
+      const payload = {
+        periodo: declaracion.periodo,
+        sustitutoria: declaracion.sustitutoria,
+        numeroOrden: declaracion.numeroOrden,
+        empresa: {
+          ruc: activeCompany.ruc,
+          name: activeCompany.name,
+        },
+        trabajador: {
+          dni: det.tPersona.persona.dni,
+          nombres: det.tPersona.persona.nombres,
+          apellidoPaterno: det.tPersona.persona.apellidoPaterno,
+          apellidoMaterno: det.tPersona.persona.apellidoMaterno,
+          categoria: det.tPersona.categoria,
+          ocupacion: det.tPersona.ocupacion?.name || "No Especificado",
+          remuneracionBase: det.tPersona.montoRemuneracionInicial,
+        },
+        jornada: {
+          diasLaborados: det.diasLaborados,
+          diasSubsidiados: det.diasSubsidiados,
+          diasNoLaborados: det.diasNoLaborados,
+          horasOrdinarias: det.horasOrdinarias,
+          horasSobretiempo: det.horasSobretiempo,
+        },
+        ingresos: det.ingresos,
+        descuentos: det.descuentos,
+        tributos: det.tributos,
+        aportacionesTrabajador,
+      };
+
+      const response = await fetch("/api/pdf-plame-persona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Error en PDF");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      toast.success("Boleta R08 generada", {
+        id: loadingToast,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el PDF", {
+        id: loadingToast,
+      });
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card overflow-hidden shadow-sm flex flex-col min-h-[500px] relative">
       {/* Tab Selectors */}
@@ -595,7 +658,7 @@ export function PlameDeclaracionTabs({
                         <th className="px-4 py-3 text-right">
                           Aporte Empleador
                         </th>
-                        <th className="px-4 py-3 text-right">Detalle</th>
+                        <th className="px-4 py-3 text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-150/50 text-sm">
@@ -641,13 +704,23 @@ export function PlameDeclaracionTabs({
                               <td className="px-4 py-3 text-right text-zinc-650 dark:text-zinc-350">
                                 S/. {essaludCont.toFixed(2)}
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                <button
-                                  onClick={() => setSelectedDetalle(det)}
-                                  className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-bento-secondary text-zinc-500 hover:text-bento-secondary transition-all"
-                                >
-                                  <FiEdit2 className="text-xs" />
-                                </button>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => setSelectedDetalle(det)}
+                                    title="Editar detalle del trabajador"
+                                    className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-bento-secondary text-zinc-500 hover:text-bento-secondary transition-all"
+                                  >
+                                    <FiEdit2 className="text-xs" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownloadBoleta(det)}
+                                    title="Descargar Boleta R08"
+                                    className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-indigo-600 text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                                  >
+                                    <FiFileText className="text-xs" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -672,79 +745,6 @@ export function PlameDeclaracionTabs({
                     </h4>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={async () => {
-                        const loadingToast = toast.loading(
-                          "Generando boleta R08...",
-                        );
-                        try {
-                          const payload = {
-                            periodo: declaracion.periodo,
-                            sustitutoria: declaracion.sustitutoria,
-                            numeroOrden: declaracion.numeroOrden,
-                            empresa: {
-                              ruc: activeCompany.ruc,
-                              name: activeCompany.name,
-                            },
-                            trabajador: {
-                              dni: selectedDetalle.tPersona.persona.dni,
-                              nombres: selectedDetalle.tPersona.persona.nombres,
-                              apellidoPaterno:
-                                selectedDetalle.tPersona.persona
-                                  .apellidoPaterno,
-                              apellidoMaterno:
-                                selectedDetalle.tPersona.persona
-                                  .apellidoMaterno,
-                              categoria: selectedDetalle.tPersona.categoria,
-                              ocupacion:
-                                selectedDetalle.tPersona.ocupacion?.name ||
-                                "No Especificado",
-                              remuneracionBase:
-                                selectedDetalle.tPersona
-                                  .montoRemuneracionInicial,
-                            },
-                            jornada: {
-                              diasLaborados: watchDetalle("diasLaborados"),
-                              diasSubsidiados: watchDetalle("diasSubsidiados"),
-                              diasNoLaborados: watchDetalle("diasNoLaborados"),
-                              horasOrdinarias: watchDetalle("horasOrdinarias"),
-                              horasSobretiempo:
-                                watchDetalle("horasSobretiempo"),
-                            },
-                            ingresos,
-                            descuentos,
-                            tributos,
-                            aportacionesTrabajador,
-                          };
-
-                          const response = await fetch(
-                            "/api/pdf-plame-persona",
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify(payload),
-                            },
-                          );
-
-                          if (!response.ok) throw new Error("Error en PDF");
-
-                          const blob = await response.blob();
-                          const url = URL.createObjectURL(blob);
-                          window.open(url, "_blank");
-                          toast.success("Boleta R08 generada", {
-                            id: loadingToast,
-                          });
-                        } catch (error) {
-                          console.error(error);
-                          toast.error("No se pudo generar el PDF", {
-                            id: loadingToast,
-                          });
-                        }
-                      }}
-                      className="px-3 py-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-bento-control shadow-sm transition-all flex items-center gap-1.5"
-                    >
-                      <FiInfo className="text-sm" /> Generar Boleta R08
-                    </button>
                     <button
                       onClick={() => setSelectedDetalle(null)}
                       className="text-xs font-bold text-zinc-500 hover:text-zinc-800"

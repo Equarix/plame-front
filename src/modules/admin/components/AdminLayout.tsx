@@ -12,6 +12,7 @@ import {
   FiBriefcase,
   FiPlusSquare,
   FiBookOpen,
+  FiSliders,
 } from "react-icons/fi";
 
 interface AdminLayoutProps {
@@ -122,6 +123,17 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
             >
               <FiBookOpen className="text-base" />
               <span>Situaciones Académicas</span>
+            </Link>
+            <Link
+              href="/admin/conceptos"
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-bento-control text-xs font-bold transition-all cursor-pointer ${
+                pathname === "/admin/conceptos"
+                  ? "bg-bento-secondary text-zinc-950 shadow-sm border border-zinc-900/5"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-850"
+              }`}
+            >
+              <FiSliders className="text-base" />
+              <span>Gestión de Conceptos</span>
             </Link>
           </nav>
         </div>
