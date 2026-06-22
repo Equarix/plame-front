@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   entidadBancariaSchema,
@@ -29,10 +29,10 @@ export function AdminEntidadBancariaModal({
   const isEditing = !!entidadToEdit;
 
   const {
-    register,
     handleSubmit,
     reset,
     formState: { errors },
+    control,
   } = useForm<EntidadBancariaFormType>({
     resolver: zodResolver(entidadBancariaSchema),
     defaultValues: {
@@ -93,12 +93,18 @@ export function AdminEntidadBancariaModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            label="Nombre de la Entidad Bancaria"
-            placeholder="Banco de la Nación"
-            disabled={isLoading}
-            {...register("name")}
-            error={errors.name?.message}
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Nombre de la Entidad Bancaria"
+                placeholder="Banco de la Nación"
+                disabled={isLoading}
+                error={errors.name?.message}
+                {...field}
+              />
+            )}
           />
 
           {/* Action buttons */}

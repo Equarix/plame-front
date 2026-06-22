@@ -2,7 +2,9 @@
 
 import { LoginForm } from "../components/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import Image from "next/image";
 import { FaShieldAlt, FaPhoneAlt, FaLock, FaBookOpen } from "react-icons/fa";
+import Logo from "@/assets/logo-instituto.jpeg";
 
 export function LoginPage() {
   return (
@@ -18,7 +20,6 @@ export function LoginPage() {
       <div className="relative z-10 w-full max-w-4xl">
         {/* Bento Grid Container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          
           {/* Tile 1: Formulario de Login (Large Card - spans 2 columns on medium screens) */}
           <div className="md:col-span-2 bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-zinc-900/5 dark:shadow-black/20">
             <div>
@@ -40,7 +41,8 @@ export function LoginPage() {
 
             <div className="mt-8 pt-4 border-t border-zinc-200/40 dark:border-zinc-800/50 flex flex-col sm:flex-row justify-between items-center gap-2">
               <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                © {new Date().getFullYear()} SUNAT. Todos los derechos reservados.
+                © {new Date().getFullYear()} SUNAT. Todos los derechos
+                reservados.
               </span>
               <span className="text-[11px] font-semibold text-bento-secondary dark:text-bento-secondary/80 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-bento-secondary animate-pulse" />
@@ -51,39 +53,30 @@ export function LoginPage() {
 
           {/* Right Side Column Bento Tiles */}
           <div className="flex flex-col gap-5">
-            
-            {/* Tile 2: Brand & Title Card (Peach Background) */}
-            <div className="bg-bento-primary dark:bg-zinc-900 border border-zinc-900/5 dark:border-zinc-800 rounded-bento-card p-6 flex flex-col justify-between shadow-md h-full min-h-[160px] text-zinc-900 dark:text-zinc-50">
-              <div className="w-10 h-10 rounded-bento-control bg-zinc-900 dark:bg-zinc-100/10 flex items-center justify-center text-white dark:text-zinc-50 shadow-sm">
-                <FaShieldAlt className="text-lg" />
+            {/* Tile 2: Brand & Title Card (Minimalist Style) */}
+            <div className="bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-6 flex flex-col justify-between shadow-md h-full min-h-[300px] text-zinc-900 dark:text-zinc-50">
+              <div className="flex flex-col items-center text-center gap-4">
+                <Image
+                  src={Logo}
+                  width={1200}
+                  height={1200}
+                  alt="Logo IESTP Florencia de Mora"
+                  className="w-auto h-full object-contain "
+                />
+                <span className="text-[9px] uppercase font-bold tracking-widest bg-bento-secondary/10 text-bento-secondary dark:bg-bento-secondary/20 dark:text-bento-secondary/90 px-3 py-1 rounded-full border border-bento-secondary/20">
+                  IESTP Florencia de Mora
+                </span>
               </div>
-              <div>
-                <h1 className="text-2xl font-black tracking-tight leading-none text-zinc-950 dark:text-white mb-2">
-                  PLAME
+              <div className="mt-4 text-center">
+                <h1 className="text-xl font-black tracking-tight leading-none text-bento-text dark:text-zinc-50 mb-2">
+                  SIMULADOR PLAME
                 </h1>
-                <p className="text-xs text-zinc-800 dark:text-zinc-300 leading-relaxed font-medium">
-                  Plataforma Integrada de la Planilla Electrónica Mensual de Pagos.
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
+                  Plataforma académica y simulador de la Planilla Electrónica
+                  Mensual de Pagos (PLAME) para el Instituto de Educación
+                  Superior Tecnológico Público "Florencia de Mora".
                 </p>
               </div>
-            </div>
-
-
-
-          </div>
-
-          {/* Bottom Row Bento Tiles */}
-          {/* Tile 4: Informative Banner (Spans 3 columns) */}
-          <div className="md:col-span-3 bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-5 flex items-start gap-4 shadow-sm">
-            <div className="p-3 bg-white dark:bg-zinc-800 rounded-bento-control text-zinc-600 dark:text-zinc-300 border border-zinc-200/50 dark:border-zinc-700/50 shadow-inner shrink-0 hidden sm:block">
-              <FaBookOpen className="text-lg" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                Declaración e Importación de T-Registro
-              </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                El sistema sincroniza automáticamente los datos de alta y baja del T-Registro para facilitar la declaración mensual de su personal y aportes.
-              </p>
             </div>
           </div>
 

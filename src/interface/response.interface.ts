@@ -41,6 +41,10 @@ export interface EmpresaData {
   status: boolean;
   createdAt?: string;
   updatedAt?: string;
+  tempresaConceptos?: {
+    conceptoId: number;
+    concepto: ConceptoData;
+  }[];
 }
 
 export interface EntidadBancariaData {
@@ -123,3 +127,16 @@ export interface PersonaData {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface ConceptoData {
+  conceptoId: number;
+  codigo: string;
+  nombre: string;
+  tipo: "INGRESO" | "DESCUENTO" | "TRIBUTO";
+  subTipo?: "Trabajador" | "Empleador" | null;
+  porcentaje?: number | null;
+  estado: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

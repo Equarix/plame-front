@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   FiCheckCircle,
@@ -9,10 +9,13 @@ import {
   FiInfo,
   FiTrash2,
   FiPlus,
+  FiFileText,
 } from "react-icons/fi";
 import { Api } from "@/lib/api";
 import { FormInput } from "@/components/forms/FormInput";
 import { DeudaPanel } from "./DeudaPanel";
+import { useQuery } from "@tanstack/react-query";
+import type { ApiResponse } from "@/interface/response.interface";
 import type {
   PlameConceptAportacionTrabajador,
   PlameConceptIngreso,
@@ -22,6 +25,33 @@ import type {
   PlameDeclaracion,
   PlameEmpresa,
 } from "../types/plame.types";
+
+interface ConceptoDetalle {
+  conceptoId: number;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  subTipo?: string | null;
+  porcentaje?: number | null;
+  estado: boolean;
+  createdAt: string;
+}
+
+interface EmpresaConcepto {
+  id: number;
+  tEmpresaCompanyId: number;
+  conceptoId: number;
+  concepto: ConceptoDetalle;
+}
+
+interface EmpresaConceptosRoot {
+  companyId: number;
+  name: string;
+  ruc: string;
+  address: string;
+  status: boolean;
+  conceptos: EmpresaConcepto[];
+}
 
 interface PlameDeclaracionTabsProps {
   declaracion: PlameDeclaracion;
@@ -38,6 +68,19 @@ export function PlameDeclaracionTabs({
   onClose,
   onRefresh,
 }: PlameDeclaracionTabsProps) {
+  const { data: companyConceptosResponse } = useQuery<ApiResponse<EmpresaConceptosRoot>>({
+    queryKey: ["company-conceptos", activeCompany.companyId, token],
+    queryFn: async () => {
+      const res = await Api.get(`/t-empresa/public/t-conceptos/${activeCompany.companyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!activeCompany.companyId && !!token,
+  });
+
+  const companyConceptos = companyConceptosResponse?.body?.conceptos || [];
+
   const [activeMainTab, setActiveMainTab] = useState<
     "general" | "detalle" | "deuda"
   >("general");
@@ -53,9 +96,9 @@ export function PlameDeclaracionTabs({
 
   // Form states
   const {
-    register: registerGeneral,
     handleSubmit: handleGeneralSubmit,
     setValue: setGeneralValue,
+    control: controlGeneral,
   } = useForm({
     defaultValues: {
       sustitutoria: declaracion.sustitutoria ? "true" : "false",
@@ -64,10 +107,10 @@ export function PlameDeclaracionTabs({
   });
 
   const {
-    register: registerDetalle,
     handleSubmit: handleDetalleSubmit,
     setValue: setDetalleValue,
     watch: watchDetalle,
+    control: controlDetalle,
   } = useForm({
     defaultValues: {
       diasLaborados: 30,
@@ -102,81 +145,90 @@ export function PlameDeclaracionTabs({
 
       // ── INGRESOS MERGE ──
       const dbIngresos = selectedDetalle.ingresos || [];
-      const defaultIngresos = [
-        {
-          code: "0105",
-          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0106",
-          name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0107",
-          name: "TRABAJO EN FERIADO O DÍA DESCANSO",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0118",
-          name: "REMUNERACIÓN VACACIONAL",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0121",
-          name: "REMUNERACIÓN O JORNAL BÁSICO",
-          devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
-          pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
-        },
-        {
-          code: "0122",
-          name: "REMUNERACIÓN PERMANENTE",
-          devengado: 0,
-          pagado: 0,
-        },
-        { code: "0201", name: "ASIGNACIÓN FAMILIAR", devengado: 0, pagado: 0 },
-        {
-          code: "0306",
-          name: "BONIFICACIONES REGULARES",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0311",
-          name: "BONIFICACION UNIFICADA DE CONSTRUCC",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0406",
-          name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0407",
-          name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0504",
-          name: "INDEMNIZACIÓN VACACIONES NO GOZADAS",
-          devengado: 0,
-          pagado: 0,
-        },
-        {
-          code: "0904",
-          name: "COMPENSACIÓN TIEMPO DE SERVICIOS",
-          devengado: 0,
-          pagado: 0,
-        },
-      ];
+      const defaultIngresos = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "INGRESO")
+            .map(c => ({
+              code: c.concepto.codigo,
+              name: c.concepto.nombre,
+              devengado: c.concepto.codigo === "0121" ? (selectedDetalle.tPersona.montoRemuneracionInicial || 0) : 0,
+              pagado: c.concepto.codigo === "0121" ? (selectedDetalle.tPersona.montoRemuneracionInicial || 0) : 0,
+            }))
+        : [
+            {
+              code: "0105",
+              name: "TRABAJO SOBRETIEMPO (H. EXTRAS 25%)",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0106",
+              name: "TRABAJO SOBRETIEMPO (H. EXTRAS 35%)",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0107",
+              name: "TRABAJO EN FERIADO O DÍA DESCANSO",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0118",
+              name: "REMUNERACIÓN VACACIONAL",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0121",
+              name: "REMUNERACIÓN O JORNAL BÁSICO",
+              devengado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+              pagado: selectedDetalle.tPersona.montoRemuneracionInicial || 0,
+            },
+            {
+              code: "0122",
+              name: "REMUNERACIÓN PERMANENTE",
+              devengado: 0,
+              pagado: 0,
+            },
+            { code: "0201", name: "ASIGNACIÓN FAMILIAR", devengado: 0, pagado: 0 },
+            {
+              code: "0306",
+              name: "BONIFICACIONES REGULARES",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0311",
+              name: "BONIFICACION UNIFICADA DE CONSTRUCC",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0406",
+              name: "GRATIF. F.PATRIAS NAVIDAD LEY 29351 Y 30334",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0407",
+              name: "GRATIFIC. PROPORCIONAL - LEY 29351 Y 30334",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0504",
+              name: "INDEMNIZACIÓN VACACIONES NO GOZADAS",
+              devengado: 0,
+              pagado: 0,
+            },
+            {
+              code: "0904",
+              name: "COMPENSACIÓN TIEMPO DE SERVICIOS",
+              devengado: 0,
+              pagado: 0,
+            },
+          ];
       const mergedIngresos = defaultIngresos.map(
         (def) => dbIngresos.find((i) => i.code === def.code) || def,
       );
@@ -188,13 +240,21 @@ export function PlameDeclaracionTabs({
 
       // ── DESCUENTOS MERGE ──
       const dbDescuentos = selectedDetalle.descuentos || [];
-      const defaultDescuentos = [
-        { code: "0701", name: "ADELANTO", monto: 0 },
-        { code: "0702", name: "CUOTA SINDICAL", monto: 0 },
-        { code: "0703", name: "DESCUENTO POR TARDANZAS", monto: 0 },
-        { code: "0704", name: "DESCUENTO POR INASISTENCIAS", monto: 0 },
-        { code: "0706", name: "OTROS DESC NO DEDUC DE BASE IMPONIB", monto: 0 },
-      ];
+      const defaultDescuentos = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "DESCUENTO")
+            .map(c => ({
+              code: c.concepto.codigo,
+              name: c.concepto.nombre,
+              monto: 0,
+            }))
+        : [
+            { code: "0701", name: "ADELANTO", monto: 0 },
+            { code: "0702", name: "CUOTA SINDICAL", monto: 0 },
+            { code: "0703", name: "DESCUENTO POR TARDANZAS", monto: 0 },
+            { code: "0704", name: "DESCUENTO POR INASISTENCIAS", monto: 0 },
+            { code: "0706", name: "OTROS DESC NO DEDUC DE BASE IMPONIB", monto: 0 },
+          ];
       const mergedDescuentos = defaultDescuentos.map(
         (def) => dbDescuentos.find((d) => d.code === def.code) || def,
       );
@@ -207,30 +267,44 @@ export function PlameDeclaracionTabs({
       // ── APORTACIONES TRABAJADOR MERGE ──
       const dbTributos = selectedDetalle.tributos || [];
       const dbAportacionesTrab = dbTributos.filter((t) =>
-        t.code.startsWith("06"),
+        t.code.startsWith("06") || (companyConceptos.length > 0 && companyConceptos.some(cc => cc.concepto.codigo === t.code && cc.concepto.subTipo === "Trabajador"))
       );
       const sumDevengado = mergedIngresos.reduce((s, i) => s + i.devengado, 0);
-      const defaultAportacionesTrab = [
-        { code: "0602", name: "CONAFOVICER", base: 0, monto: 0 },
-        {
-          code: "0605",
-          name: "RENTA QUINTA CATEGORÍA RETENCIONES",
-          base: sumDevengado,
-          monto: 0,
-        },
-        {
-          code: "0607",
-          name: "SISTEMA NAC. DE PENSIONES DL 19990",
-          base: sumDevengado,
-          monto: 0,
-        },
-        {
-          code: "0611",
-          name: "OTROS APORTACIONES TRAB./PENSIONIS.",
-          base: 0,
-          monto: 0,
-        },
-      ];
+      const defaultAportacionesTrab = companyConceptos.length > 0
+        ? companyConceptos
+            .filter(c => c.concepto.tipo === "TRIBUTO" && c.concepto.subTipo === "Trabajador")
+            .map(c => {
+              const pct = c.concepto.porcentaje || 0;
+              const base = pct > 0 ? sumDevengado : 0;
+              const monto = pct > 0 ? Number((base * (pct / 100)).toFixed(2)) : 0;
+              return {
+                code: c.concepto.codigo,
+                name: c.concepto.nombre,
+                base,
+                monto,
+              };
+            })
+        : [
+            { code: "0602", name: "CONAFOVICER", base: 0, monto: 0 },
+            {
+              code: "0605",
+              name: "RENTA QUINTA CATEGORÍA RETENCIONES",
+              base: sumDevengado,
+              monto: 0,
+            },
+            {
+              code: "0607",
+              name: "SISTEMA NAC. DE PENSIONES DL 19990",
+              base: sumDevengado,
+              monto: 0,
+            },
+            {
+              code: "0611",
+              name: "OTROS APORTACIONES TRAB./PENSIONIS.",
+              base: 0,
+              monto: 0,
+            },
+          ];
       const mergedAportacionesTrab = defaultAportacionesTrab.map((def) => {
         const found = dbAportacionesTrab.find((a) => a.code === def.code);
         return found
@@ -256,7 +330,7 @@ export function PlameDeclaracionTabs({
 
       setTributos(dbTributos);
     }
-  }, [selectedDetalle, setDetalleValue]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDetalle, setDetalleValue, companyConceptos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSaveGeneral = async (data: {
     sustitutoria: string;
@@ -372,27 +446,42 @@ export function PlameDeclaracionTabs({
   );
   const totalDescuentos = descuentos.reduce((sum, item) => sum + item.monto, 0);
 
-  // Recalculated tax base
-  const essaludBase =
-    totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado;
-  const essaludMonto = Number((essaludBase * 0.09).toFixed(2));
+  // Recalculated tax base and finalTributos based on company concepts
+  const finalTributos = companyConceptos.length > 0
+    ? companyConceptos
+        .filter(c => c.concepto.tipo === "TRIBUTO" && c.concepto.subTipo === "Empleador")
+        .map(c => {
+          const isEssalud = c.concepto.codigo === "0804";
+          const base = isEssalud
+            ? (totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado)
+            : totalIngresosDevengado;
+          const pct = c.concepto.porcentaje || 0;
+          const monto = pct > 0 ? Number((base * (pct / 100)).toFixed(2)) : 0;
+          return {
+            code: c.concepto.codigo,
+            name: c.concepto.nombre,
+            base: pct > 0 ? base : 0,
+            monto,
+          };
+        })
+    : [
+        { code: "0801", name: "SPP - APORTACIÓN VOLUNTARIA", base: 0, monto: 0 },
+        { code: "0803", name: "PÓLIZA DE SEGURO - D. LEG. 688", base: 0, monto: 0 },
+        {
+          code: "0804",
+          name: "ESSALUD(REGULAR CBSSP AGRAR/AC)TRAB",
+          base: totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado,
+          monto: Number(((totalIngresosDevengado < 1130 ? 1130 : totalIngresosDevengado) * 0.09).toFixed(2)),
+        },
+        {
+          code: "0809",
+          name: "OTRAS APORTACIONES CARGO EMPLEADOR",
+          base: 0,
+          monto: 0,
+        },
+      ];
 
-  const finalTributos = [
-    { code: "0801", name: "SPP - APORTACIÓN VOLUNTARIA", base: 0, monto: 0 },
-    { code: "0803", name: "PÓLIZA DE SEGURO - D. LEG. 688", base: 0, monto: 0 },
-    {
-      code: "0804",
-      name: "ESSALUD(REGULAR CBSSP AGRAR/AC)TRAB",
-      base: essaludBase,
-      monto: essaludMonto,
-    },
-    {
-      code: "0809",
-      name: "OTRAS APORTACIONES CARGO EMPLEADOR",
-      base: 0,
-      monto: 0,
-    },
-  ];
+  const essaludMonto = finalTributos.find(t => t.code === "0804")?.monto || 0;
 
   const handleSaveDeuda = async (deudaData: any) => {
     setIsProcessingGlobal(true);
@@ -424,6 +513,68 @@ export function PlameDeclaracionTabs({
       toast.error("Error al finalizar la declaración");
     } finally {
       setIsProcessingGlobal(false);
+    }
+  };
+
+  const handleDownloadBoleta = async (det: PlameDetalle) => {
+    const loadingToast = toast.loading(
+      `Generando boleta R08 para ${det.tPersona.persona.nombres}...`,
+    );
+    try {
+      const dbTributos = det.tributos || [];
+      const aportacionesTrabajador = dbTributos.filter((t) =>
+        t.code.startsWith("06"),
+      );
+
+      const payload = {
+        periodo: declaracion.periodo,
+        sustitutoria: declaracion.sustitutoria,
+        numeroOrden: declaracion.numeroOrden,
+        empresa: {
+          ruc: activeCompany.ruc,
+          name: activeCompany.name,
+        },
+        trabajador: {
+          dni: det.tPersona.persona.dni,
+          nombres: det.tPersona.persona.nombres,
+          apellidoPaterno: det.tPersona.persona.apellidoPaterno,
+          apellidoMaterno: det.tPersona.persona.apellidoMaterno,
+          categoria: det.tPersona.categoria,
+          ocupacion: det.tPersona.ocupacion?.name || "No Especificado",
+          remuneracionBase: det.tPersona.montoRemuneracionInicial,
+        },
+        jornada: {
+          diasLaborados: det.diasLaborados,
+          diasSubsidiados: det.diasSubsidiados,
+          diasNoLaborados: det.diasNoLaborados,
+          horasOrdinarias: det.horasOrdinarias,
+          horasSobretiempo: det.horasSobretiempo,
+        },
+        ingresos: det.ingresos,
+        descuentos: det.descuentos,
+        tributos: det.tributos,
+        aportacionesTrabajador,
+      };
+
+      const response = await fetch("/api/pdf-plame-persona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Error en PDF");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      toast.success("Boleta R08 generada", {
+        id: loadingToast,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el PDF", {
+        id: loadingToast,
+      });
     }
   };
 
@@ -505,26 +656,34 @@ export function PlameDeclaracionTabs({
                   <label className="text-[13px] font-semibold text-bento-text/80 dark:text-bento-text/90 mb-2">
                     ¿Es declaración sustitutoria o rectificatoria?
                   </label>
-                  <div className="flex gap-4 items-center h-11">
-                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                      <input
-                        type="radio"
-                        value="true"
-                        {...registerGeneral("sustitutoria")}
-                        className="text-bento-secondary"
-                      />{" "}
-                      Sí
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                      <input
-                        type="radio"
-                        value="false"
-                        {...registerGeneral("sustitutoria")}
-                        className="text-bento-secondary"
-                      />{" "}
-                      No
-                    </label>
-                  </div>
+                  <Controller
+                    name="sustitutoria"
+                    control={controlGeneral}
+                    render={({ field }) => (
+                      <div className="flex gap-4 items-center h-11">
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input
+                            type="radio"
+                            value="true"
+                            checked={field.value === "true"}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="text-bento-secondary"
+                          />{" "}
+                          Sí
+                        </label>
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                          <input
+                            type="radio"
+                            value="false"
+                            checked={field.value === "false"}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="text-bento-secondary"
+                          />{" "}
+                          No
+                        </label>
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -595,7 +754,7 @@ export function PlameDeclaracionTabs({
                         <th className="px-4 py-3 text-right">
                           Aporte Empleador
                         </th>
-                        <th className="px-4 py-3 text-right">Detalle</th>
+                        <th className="px-4 py-3 text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-150/50 text-sm">
@@ -641,13 +800,23 @@ export function PlameDeclaracionTabs({
                               <td className="px-4 py-3 text-right text-zinc-650 dark:text-zinc-350">
                                 S/. {essaludCont.toFixed(2)}
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                <button
-                                  onClick={() => setSelectedDetalle(det)}
-                                  className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-bento-secondary text-zinc-500 hover:text-bento-secondary transition-all"
-                                >
-                                  <FiEdit2 className="text-xs" />
-                                </button>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => setSelectedDetalle(det)}
+                                    title="Editar detalle del trabajador"
+                                    className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-bento-secondary text-zinc-500 hover:text-bento-secondary transition-all"
+                                  >
+                                    <FiEdit2 className="text-xs" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownloadBoleta(det)}
+                                    title="Descargar Boleta R08"
+                                    className="p-1 border border-zinc-200 dark:border-zinc-800 rounded hover:border-indigo-600 text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                                  >
+                                    <FiFileText className="text-xs" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -672,79 +841,6 @@ export function PlameDeclaracionTabs({
                     </h4>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={async () => {
-                        const loadingToast = toast.loading(
-                          "Generando boleta R08...",
-                        );
-                        try {
-                          const payload = {
-                            periodo: declaracion.periodo,
-                            sustitutoria: declaracion.sustitutoria,
-                            numeroOrden: declaracion.numeroOrden,
-                            empresa: {
-                              ruc: activeCompany.ruc,
-                              name: activeCompany.name,
-                            },
-                            trabajador: {
-                              dni: selectedDetalle.tPersona.persona.dni,
-                              nombres: selectedDetalle.tPersona.persona.nombres,
-                              apellidoPaterno:
-                                selectedDetalle.tPersona.persona
-                                  .apellidoPaterno,
-                              apellidoMaterno:
-                                selectedDetalle.tPersona.persona
-                                  .apellidoMaterno,
-                              categoria: selectedDetalle.tPersona.categoria,
-                              ocupacion:
-                                selectedDetalle.tPersona.ocupacion?.name ||
-                                "No Especificado",
-                              remuneracionBase:
-                                selectedDetalle.tPersona
-                                  .montoRemuneracionInicial,
-                            },
-                            jornada: {
-                              diasLaborados: watchDetalle("diasLaborados"),
-                              diasSubsidiados: watchDetalle("diasSubsidiados"),
-                              diasNoLaborados: watchDetalle("diasNoLaborados"),
-                              horasOrdinarias: watchDetalle("horasOrdinarias"),
-                              horasSobretiempo:
-                                watchDetalle("horasSobretiempo"),
-                            },
-                            ingresos,
-                            descuentos,
-                            tributos,
-                            aportacionesTrabajador,
-                          };
-
-                          const response = await fetch(
-                            "/api/pdf-plame-persona",
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify(payload),
-                            },
-                          );
-
-                          if (!response.ok) throw new Error("Error en PDF");
-
-                          const blob = await response.blob();
-                          const url = URL.createObjectURL(blob);
-                          window.open(url, "_blank");
-                          toast.success("Boleta R08 generada", {
-                            id: loadingToast,
-                          });
-                        } catch (error) {
-                          console.error(error);
-                          toast.error("No se pudo generar el PDF", {
-                            id: loadingToast,
-                          });
-                        }
-                      }}
-                      className="px-3 py-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-bento-control shadow-sm transition-all flex items-center gap-1.5"
-                    >
-                      <FiInfo className="text-sm" /> Generar Boleta R08
-                    </button>
                     <button
                       onClick={() => setSelectedDetalle(null)}
                       className="text-xs font-bold text-zinc-500 hover:text-zinc-800"
@@ -810,17 +906,29 @@ export function PlameDeclaracionTabs({
                           Días de la Jornada
                         </h5>
                         <div className="grid grid-cols-3 gap-4 items-end">
-                          <FormInput
-                            label="Laborados"
-                            type="number"
-                            {...registerDetalle("diasLaborados")}
+                          <Controller
+                            name="diasLaborados"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Laborados"
+                                type="number"
+                              />
+                            )}
                           />
                           <div className="relative">
-                            <FormInput
-                              label="Subsidiados"
-                              type="number"
-                              {...registerDetalle("diasSubsidiados")}
-                              readOnly
+                            <Controller
+                              name="diasSubsidiados"
+                              control={controlDetalle}
+                              render={({ field }) => (
+                                <FormInput
+                                  {...field}
+                                  label="Subsidiados"
+                                  type="number"
+                                  readOnly
+                                />
+                              )}
                             />
                             <button
                               type="button"
@@ -830,10 +938,16 @@ export function PlameDeclaracionTabs({
                               Editar
                             </button>
                           </div>
-                          <FormInput
-                            label="No Laborados"
-                            type="number"
-                            {...registerDetalle("diasNoLaborados")}
+                          <Controller
+                            name="diasNoLaborados"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="No Laborados"
+                                type="number"
+                              />
+                            )}
                           />
                         </div>
                       </div>
@@ -843,15 +957,27 @@ export function PlameDeclaracionTabs({
                           Horas Laboradas
                         </h5>
                         <div className="grid grid-cols-2 gap-4">
-                          <FormInput
-                            label="Ordinarias (HHH:MM)"
-                            placeholder="240:00"
-                            {...registerDetalle("horasOrdinarias")}
+                          <Controller
+                            name="horasOrdinarias"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Ordinarias (HHH:MM)"
+                                placeholder="240:00"
+                              />
+                            )}
                           />
-                          <FormInput
-                            label="Sobretiempo (HHH:MM)"
-                            placeholder="00:00"
-                            {...registerDetalle("horasSobretiempo")}
+                          <Controller
+                            name="horasSobretiempo"
+                            control={controlDetalle}
+                            render={({ field }) => (
+                              <FormInput
+                                {...field}
+                                label="Sobretiempo (HHH:MM)"
+                                placeholder="00:00"
+                              />
+                            )}
                           />
                         </div>
                       </div>

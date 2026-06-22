@@ -3,16 +3,16 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #FFF5E6; /* Bento surface */
-  --foreground: #111827; /* Bento text */
+  --background: #F8FAFC; /* Slate-50 background matching the logo's sky accents */
+  --foreground: #0F172A; /* Slate-900 text */
 
-  --bento-primary: #FAD4C0;
-  --bento-secondary: #80A1C1;
+  --bento-primary: #A71E2D; /* Crimson Red from the logo */
+  --bento-secondary: #1E40AF; /* Royal Blue from the logo */
   --bento-success: #16A34A;
   --bento-warning: #D97706;
   --bento-danger: #DC2626;
-  --bento-surface: #FFF5E6;
-  --bento-text: #111827;
+  --bento-surface: #F1F5F9; /* Slate-100 bento surface */
+  --bento-text: #0F172A;
 
   /* Bento rounded corners */
   --radius-bento-control: 6px;
@@ -42,13 +42,10 @@
 }
 
 .dark {
-  /* Keeping bento warm tones but slightly darker for contrast if preferred, 
-     or we can stick to the bento specification of surface=#FFF5E6. 
-     Let's keep the cozy warm light theme as default, and slightly adjust for dark mode: */
-  --background: #12100e;
-  --foreground: #fcf8f2;
-  --bento-surface: #1c1815;
-  --bento-text: #fcf8f2;
+  --background: #020617; /* Slate-950 background */
+  --foreground: #F8FAFC; /* Slate-50 text */
+  --bento-surface: #0F172A; /* Slate-900 surface */
+  --bento-text: #F8FAFC;
 }
 
 body {
