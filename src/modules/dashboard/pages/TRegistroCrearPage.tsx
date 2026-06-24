@@ -190,7 +190,7 @@ export function TRegistroCrearPage() {
         fechaInicioTipo: formatDate(tPersonaDetails.fechaIngreso),
         regimenLaboral: tPersonaDetails.regimenLaboral || "D_LEG_728",
         rdb_descripcion_detalle: tPersonaDetails.otroRegimenLaboral || "",
-        categoriaOcupacional: "EMPLEADO",
+        categoriaOcupacional: tPersonaDetails.categoriaOcupacional || "EMPLEADO",
         ocupacionId: tPersonaDetails.ocupacionId || "",
         ocupacionNombre: tPersonaDetails.ocupacion?.name || "",
         tipoContrato: tPersonaDetails.tipoContrato || "PLAZO_INDETERMINADO",
@@ -337,6 +337,9 @@ export function TRegistroCrearPage() {
       situacionEducativaId?: string | number;
       quintaCategoriaExonerada?: string;
       evitaDobleImposicion?: string;
+      fechaFin?: string;
+      motivoBaja?: string;
+      categoriaOcupacional?: string;
     };
     const activeOcupacionId = formValues.ocupacionId
       ? Number(formValues.ocupacionId)
@@ -371,6 +374,11 @@ export function TRegistroCrearPage() {
       montoRemuneracionInicial: formValues.montoRemuneracion
         ? Number(formValues.montoRemuneracion)
         : 1025,
+      periodoFin: formValues.fechaFin
+        ? new Date(formValues.fechaFin).toISOString()
+        : null,
+      motivoBaja: formValues.motivoBaja || null,
+      categoriaOcupacional: formValues.categoriaOcupacional || "EMPLEADO",
 
       regimenSalud: formValues.regimenSalud || "ESSALUD_REGULAR",
       fechaInicioSalud: formValues.fechaInicioSalud

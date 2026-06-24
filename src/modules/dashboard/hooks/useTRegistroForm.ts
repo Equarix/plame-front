@@ -71,6 +71,9 @@ export interface CreateTPersonaInput {
   situacionEspecial?: string;
   discapacidad?: boolean;
   sindicalizado?: boolean;
+  categoriaOcupacional?: string | null;
+  motivoBaja?: string | null;
+  periodoFin?: string | null;
 }
 
 export interface TRegistroSuccessData {
@@ -225,8 +228,12 @@ export function useTRegistroForm() {
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     if (selectedPersona) {
-      setTelefono(selectedPersona.telefono || "");
-      setEmail(selectedPersona.email || "");
+      if (selectedPersona.telefono) {
+        setTelefono(selectedPersona.telefono);
+      }
+      if (selectedPersona.email) {
+        setEmail(selectedPersona.email);
+      }
     } else {
       setTelefono("");
       setEmail("");

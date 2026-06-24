@@ -79,6 +79,7 @@ export interface TPersonaRow {
     nombre: string;
   } | null;
   estudios?: EstudiosInput[];
+  categoriaOcupacional?: string | null;
 }
 
 interface ActiveCompanyType {

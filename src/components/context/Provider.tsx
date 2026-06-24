@@ -6,17 +6,24 @@ import AuthProvider from "./AuthContext";
 import { ThemeProvider } from "./ThemeContext";
 import { Toaster } from "sonner";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export function Provider({ children }: PropsWithChildren) {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <ThemeProvider>
-                    {children}
-                    <Toaster richColors position="top-right" />
-                </ThemeProvider>
-            </AuthProvider>
-        </QueryClientProvider>
-    )
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }

@@ -164,9 +164,15 @@ export function TrabajadorTab({
                       error={errors.motivoBaja?.message as string}
                       options={[
                         { value: "RENUNCIA", label: "RENUNCIA" },
-                        { value: "DESPIDO", label: "DESPIDO" },
-                        { value: "MUTUO_DISENSO", label: "MUTUO DISENSO" },
-                        { value: "JUBILACION", label: "JUBILACIÓN" },
+                        { value: "RENUNCIA CON INCENTIVOS", label: "RENUNCIA CON INCENTIVOS" },
+                        { value: "DESPIDO O DESTITUCION", label: "DESPIDO O DESTITUCION" },
+                        { value: "CESE COLECTIVO", label: "CESE COLECTIVO" },
+                        { value: "JUBILACION", label: "JUBILACION" },
+                        { value: "INVALIDEZ ABSOLUTA PERMANENTE", label: "INVALIDEZ ABSOLUTA PERMANENTE" },
+                        { value: "TERMINACION DE LA OBRA O SERVICIO O VENCIMIENTO DEL PLAZO", label: "TERMINACION DE LA OBRA O SERVICIO O VENCIMIENTO DEL PLAZO" },
+                        { value: "MUTUO DISENSO", label: "MUTUO DISENSO" },
+                        { value: "FALLECIMIENTO", label: "FALLECIMIENTO" },
+                        { value: "BAJA POR SUCESIÓN EN POSICIÓN DEL EMPLEADOR", label: "BAJA POR SUCESIÓN EN POSICIÓN DEL EMPLEADOR" },
                       ]}
                       {...field}
                     />
@@ -240,7 +246,7 @@ export function TrabajadorTab({
                   render={({ field }) => (
                     <FormSelect
                       label="Categoría ocupacional"
-                      options={CATEGORIAS_PERSONA}
+                      options={TIPOS_TRABAJADOR}
                       error={errors.categoriaOcupacional?.message as string}
                       {...field}
                     />
