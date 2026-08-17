@@ -3,16 +3,21 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #F8FAFC; /* Slate-50 background matching the logo's sky accents */
-  --foreground: #0F172A; /* Slate-900 text */
+  --background: rgba(248, 250, 252, 0.82); /* Semi-transparent Slate-50 tint */
+  --foreground: #0f172a; /* Slate-900 text */
 
-  --bento-primary: #A71E2D; /* Crimson Red from the logo */
-  --bento-secondary: #1E40AF; /* Royal Blue from the logo */
-  --bento-success: #16A34A;
-  --bento-warning: #D97706;
-  --bento-danger: #DC2626;
-  --bento-surface: #F1F5F9; /* Slate-100 bento surface */
-  --bento-text: #0F172A;
+  --bento-primary: #a71e2d; /* Crimson Red from the logo */
+  --bento-secondary: #1e40af; /* Royal Blue from the logo */
+  --bento-success: #16a34a;
+  --bento-warning: #d97706;
+  --bento-danger: #dc2626;
+  --bento-surface: rgba(
+    241,
+    245,
+    249,
+    0.65
+  ); /* Translucent Slate-100 bento surface */
+  --bento-text: #0f172a;
 
   /* Bento rounded corners */
   --radius-bento-control: 6px;
@@ -42,16 +47,30 @@
 }
 
 .dark {
-  --background: #020617; /* Slate-950 background */
-  --foreground: #F8FAFC; /* Slate-50 text */
-  --bento-surface: #0F172A; /* Slate-900 surface */
-  --bento-text: #F8FAFC;
+  --background: rgba(9, 9, 11, 0.85); /* Semi-transparent Zinc-950 tint */
+  --foreground: #f8fafc; /* Slate-50 text */
+  --bento-surface: rgba(24, 24, 27, 0.65); /* Translucent Zinc-900 surface */
+  --bento-text: #f8fafc;
 }
 
 body {
-  background: var(--background);
+  position: relative;
+  background-color: transparent;
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
   max-width: 100%;
+  min-height: 100vh;
+}
+
+/* Fixed background image layer */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/bg.jpeg");
+  background-size: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -2;
 }

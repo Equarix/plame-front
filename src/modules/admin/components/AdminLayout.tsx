@@ -23,7 +23,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex text-zinc-900 dark:text-zinc-50 overflow-hidden">
+    <div className="min-h-screen bg-bento-surface/40 dark:bg-zinc-950/40 font-sans flex text-zinc-900 dark:text-zinc-50 overflow-hidden">
       
       {/* MOBILE DRAWER SIDEBAR */}
       {isMobileMenuOpen && (
@@ -35,7 +35,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           />
           {/* Drawer container */}
           <div
-            className="absolute top-0 bottom-0 left-0 w-64 bg-white dark:bg-zinc-900 p-5 flex flex-col justify-between border-r border-zinc-200/50 dark:border-zinc-800/50 transition-transform duration-300 ease-out transform translate-x-0"
+            className="absolute top-0 bottom-0 left-0 w-64 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-5 flex flex-col justify-between border-r border-zinc-200/50 dark:border-zinc-800/50 transition-transform duration-300 ease-out transform translate-x-0"
           >
             {/* Close button inside drawer */}
             <button
@@ -57,7 +57,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       )}
 
       {/* ASIDE (Sidebar) - Bento Styled Desktop */}
-      <aside className="w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800/50 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
+      <aside className="w-64 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-r border-zinc-200/50 dark:border-zinc-800/50 flex flex-col justify-between p-5 shrink-0 hidden md:flex">
         <AdminSidebarContent
           pathname={pathname}
           user={user}
