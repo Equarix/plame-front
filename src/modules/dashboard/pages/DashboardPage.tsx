@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 
 import { useAuth } from "@/components/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { FiLogOut, FiUsers, FiFileText, FiCheck, FiSettings, FiActivity, FiLock } from "react-icons/fi";
+import {
+  FiLogOut,
+  FiUsers,
+  FiFileText,
+  FiCheck,
+  FiSettings,
+  FiActivity,
+  FiLock,
+} from "react-icons/fi";
 import { FaShieldAlt } from "react-icons/fa";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useQuery } from "@tanstack/react-query";
@@ -24,21 +32,19 @@ export function DashboardPage() {
   }, []);
 
   // Fetch public companies
-  const {
-    data: publicCompaniesResponse,
-    isLoading: isLoadingCompanies,
-  } = useQuery<ApiResponse<EmpresaData[]>>({
-    queryKey: ["public-companies", token],
-    queryFn: async () => {
-      const res = await Api.get("/t-empresa/public", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return res.data;
-    },
-    enabled: !!token,
-  });
+  const { data: publicCompaniesResponse, isLoading: isLoadingCompanies } =
+    useQuery<ApiResponse<EmpresaData[]>>({
+      queryKey: ["public-companies", token],
+      queryFn: async () => {
+        const res = await Api.get("/t-empresa/public", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return res.data;
+      },
+      enabled: !!token,
+    });
 
   const companiesList = publicCompaniesResponse?.body || [];
   const activeCompany = companiesList.find((c) => c.companyId === companyId);
@@ -47,14 +53,14 @@ export function DashboardPage() {
     router.push(path);
   };
 
-  const displayName = mounted && user ? `${user.name} ${user.lastName}` : "Usuario";
+  const displayName =
+    mounted && user ? `${user.name} ${user.lastName}` : "Usuario";
   const displayUsername = mounted && user ? user.username : "";
   const displayRole = mounted && user ? user.role : "USUARIO";
 
   return (
-    <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-bento-surface/40 dark:bg-zinc-950/40 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-6">
-        
         {/* ROW 1: Header / Top Navbar (Bento Card Layout) */}
         <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-4 sm:p-5 flex items-center justify-between shadow-sm gap-4">
           <div className="flex items-center gap-3">
@@ -114,9 +120,9 @@ export function DashboardPage() {
                 {displayRole}
               </span>
             </div>
-            
+
             <ThemeToggle />
-            
+
             <button
               onClick={logout}
               className="flex items-center gap-2 px-3.5 py-2 border border-zinc-200 dark:border-zinc-800 hover:border-bento-danger/30 rounded-bento-control text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-bento-danger hover:bg-bento-danger/5 transition-all duration-200 cursor-pointer"
@@ -129,7 +135,6 @@ export function DashboardPage() {
 
         {/* ROW 2: Bento Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
           {/* Bento Card 1: T-Registro (Large Card spanning 2 columns) */}
           <div
             onClick={() => {
@@ -146,11 +151,21 @@ export function DashboardPage() {
             }`}
           >
             {/* Top-right decorative background patch */}
-            <div className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
-              !companyId ? "bg-zinc-100/50 dark:bg-zinc-850/50" : "bg-bento-primary/10 group-hover:bg-bento-primary/20"
-            }`} />
+            <div
+              className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
+                !companyId
+                  ? "bg-zinc-100/50 dark:bg-zinc-850/50"
+                  : "bg-bento-primary/10 group-hover:bg-bento-primary/20"
+              }`}
+            />
 
-            <div className={!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}>
+            <div
+              className={
+                !companyId
+                  ? "blur-[1.5px] opacity-40 select-none pointer-events-none"
+                  : ""
+              }
+            >
               <div className="w-12 h-12 rounded-bento-control bg-bento-primary text-zinc-900 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300">
                 <FiUsers className="text-xl" />
               </div>
@@ -158,11 +173,15 @@ export function DashboardPage() {
                 T-Registro
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xl">
-                Registro Laboral obligatorio donde se inscribe a empleadores, trabajadores, pensionistas, prestadores de servicios y derechohabientes.
+                Registro Laboral obligatorio donde se inscribe a empleadores,
+                trabajadores, pensionistas, prestadores de servicios y
+                derechohabientes.
               </p>
             </div>
 
-            <div className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}>
+            <div
+              className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}
+            >
               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                 Sincronización activa
@@ -193,20 +212,34 @@ export function DashboardPage() {
               </span>
               <div className="space-y-3">
                 <div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Contribuyente</p>
-                  <p className="text-sm font-bold text-bento-text dark:text-zinc-100">{displayName}</p>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">
+                    Contribuyente
+                  </p>
+                  <p className="text-sm font-bold text-bento-text dark:text-zinc-100">
+                    {displayName}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Nombre de usuario</p>
-                  <p className="text-sm font-mono text-zinc-600 dark:text-zinc-300">{displayUsername}</p>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">
+                    Nombre de usuario
+                  </p>
+                  <p className="text-sm font-mono text-zinc-600 dark:text-zinc-300">
+                    {displayUsername}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Rol del Sistema</p>
-                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{displayRole}</p>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">
+                    Rol del Sistema
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
+                    {displayRole}
+                  </p>
                 </div>
                 {mounted && (
                   <div className="pt-3 border-t border-zinc-200/30 dark:border-zinc-800/30">
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">Empresa Seleccionada</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase">
+                      Empresa Seleccionada
+                    </p>
                     {companyId ? (
                       <div className="mt-1.5 flex items-center justify-between gap-2">
                         <div className="min-w-0">
@@ -226,7 +259,9 @@ export function DashboardPage() {
                       </div>
                     ) : (
                       <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold text-bento-danger">Sin seleccionar</p>
+                        <p className="text-xs font-bold text-bento-danger">
+                          Sin seleccionar
+                        </p>
                         <button
                           onClick={() => setIsModalOpen(true)}
                           className="shrink-0 px-2 py-1 text-[9px] font-bold bg-bento-danger text-white rounded hover:bg-bento-danger/90 transition-all cursor-pointer animate-pulse"
@@ -257,12 +292,17 @@ export function DashboardPage() {
                   <FiActivity className="text-lg animate-pulse" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-bento-text dark:text-zinc-100">Servidores SUNAT</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 font-semibold">Operando normalmente</p>
+                  <p className="text-sm font-bold text-bento-text dark:text-zinc-100">
+                    Servidores SUNAT
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                    Operando normalmente
+                  </p>
                 </div>
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                La firma digital y el envío de declaraciones PLAME se encuentran disponibles para el periodo actual.
+                La firma digital y el envío de declaraciones PLAME se encuentran
+                disponibles para el periodo actual.
               </p>
             </div>
 
@@ -288,11 +328,21 @@ export function DashboardPage() {
             }`}
           >
             {/* Top-right decorative background patch */}
-            <div className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
-              !companyId ? "bg-zinc-100/50 dark:bg-zinc-850/50" : "bg-bento-secondary/10 group-hover:bg-bento-secondary/20"
-            }`} />
+            <div
+              className={`absolute top-0 right-0 w-28 h-28 rounded-bl-full transition-colors ${
+                !companyId
+                  ? "bg-zinc-100/50 dark:bg-zinc-850/50"
+                  : "bg-bento-secondary/10 group-hover:bg-bento-secondary/20"
+              }`}
+            />
 
-            <div className={!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}>
+            <div
+              className={
+                !companyId
+                  ? "blur-[1.5px] opacity-40 select-none pointer-events-none"
+                  : ""
+              }
+            >
               <div className="w-12 h-12 rounded-bento-control bg-bento-secondary text-zinc-950 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300">
                 <FiFileText className="text-xl" />
               </div>
@@ -300,11 +350,15 @@ export function DashboardPage() {
                 PLAME
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xl">
-                Planilla Mensual de Pagos. Permite declarar las remuneraciones de los trabajadores e importaciones directas de la información registrada en el T-Registro.
+                Planilla Mensual de Pagos. Permite declarar las remuneraciones
+                de los trabajadores e importaciones directas de la información
+                registrada en el T-Registro.
               </p>
             </div>
 
-            <div className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}>
+            <div
+              className={`mt-8 flex items-center justify-between ${!companyId ? "blur-[1.5px] opacity-40 select-none pointer-events-none" : ""}`}
+            >
               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                 Declaración de Junio 2026 activa
@@ -326,9 +380,7 @@ export function DashboardPage() {
               </div>
             )}
           </div>
-
         </div>
-
       </div>
 
       <CompanySelectionModal

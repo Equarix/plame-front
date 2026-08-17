@@ -56,7 +56,7 @@ export function DashboardLayout({ children, title, icon }: DashboardLayoutProps)
   // While mounting or if not logged/selected, show a full screen loading or return null
   if (!mounted || !companyId) {
     return (
-      <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-bento-surface/40 dark:bg-zinc-950/40 flex items-center justify-center">
         <div className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold animate-pulse">
           Cargando panel...
         </div>
@@ -65,7 +65,7 @@ export function DashboardLayout({ children, title, icon }: DashboardLayoutProps)
   }
 
   return (
-    <div className="min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-bento-surface/40 dark:bg-zinc-950/40 font-sans flex flex-col p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-6">
         {/* Navbar (Bento Header Card) */}
         <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-bento-card p-4 sm:p-5 flex items-center justify-between shadow-sm gap-4">

@@ -8,7 +8,7 @@ import Logo from "@/assets/logo-instituto.jpeg";
 
 export function LoginPage() {
   return (
-    <div className="relative min-h-screen bg-bento-surface dark:bg-zinc-950 font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <div className="relative min-h-screen bg-bento-surface/40 dark:bg-zinc-950/40 font-sans flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
       {/* Floating Theme Toggle */}
       <div className="absolute top-5 right-5 z-20">
         <ThemeToggle />
